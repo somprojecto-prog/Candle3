@@ -29,11 +29,9 @@ function computeMode(failed: boolean): StoryMode {
     const forced = new URLSearchParams(window.location.search).get("story");
     if (forced === "on" || forced === "off") return forced;
   }
-  const on =
-    window.matchMedia(DESKTOP_QUERY).matches &&
-    !window.matchMedia(REDUCED_QUERY).matches &&
-    hasWebGL() &&
-    !failed;
+  // Antes: desktop + !reducedMotion + webgl + !failed
+  // Agora: só webgl + !failed
+  const on = hasWebGL() && !failed;
   return on ? "on" : "off";
 }
 
