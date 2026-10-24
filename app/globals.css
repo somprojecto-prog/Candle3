@@ -1,0 +1,133 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+html {
+  background: #0a0a0a;
+  scroll-padding-top: 72px;
+  scrollbar-width: thin;
+  scrollbar-color: #2a2a2a #0a0a0a;
+}
+
+body {
+  @apply bg-ink text-fg;
+  overflow-x: clip;
+}
+
+::selection {
+  background: #c9a84c;
+  color: #0a0a0a;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a2a2a;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #c9a84c;
+}
+
+:focus-visible {
+  outline: 2px solid #c9a84c;
+  outline-offset: 4px;
+}
+
+.js [data-reveal] {
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js [data-reveal] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes heroFade {
+  to {
+    opacity: 1;
+  }
+}
+@keyframes heroScale {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes heroUp {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes heroShow {
+  to {
+    visibility: visible;
+  }
+}
+
+html[data-hero="playing"] [data-hero-comment] {
+  opacity: 0;
+  animation: heroFade 160ms ease-out 200ms forwards;
+}
+html[data-hero="playing"] [data-hero-sub] {
+  opacity: 0;
+  animation: heroFade 400ms ease-out 1700ms forwards;
+}
+html[data-hero="playing"] [data-hero-product] {
+  opacity: 0;
+  transform: scale(0.96);
+  animation: heroScale 500ms cubic-bezier(0.2, 0.7, 0.2, 1) 2000ms forwards;
+}
+html[data-hero="playing"] [data-hero-cta] {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: heroUp 300ms ease-out 2300ms forwards;
+}
+html[data-hero="playing"] [data-hero-scroll] {
+  opacity: 0;
+  animation: heroFade 300ms ease-out 2600ms forwards;
+}
+html[data-hero="playing"] [data-hero-title-full] {
+  visibility: hidden;
+  animation: heroShow 0s step-end 3.2s forwards;
+}
+[data-hero-title-typed] {
+  display: none;
+}
+html[data-hero="playing"] [data-hero-title-typed] {
+  display: block;
+}
+.hero-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 0.82em;
+  margin-left: 0.05em;
+  vertical-align: -0.02em;
+  background: #c9a84c;
+  visibility: hidden;
+}
