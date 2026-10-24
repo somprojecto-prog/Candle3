@@ -25,7 +25,7 @@ export function finishHero(): void {
 
 export function charAt(i: number): number {
   const L = T.charMs.length;
-  let t: number = T.typeStart;
+  let t: number = T.typeStart as number;
   for (let j = 0; j < i; j++) t += T.charMs[j % L] / 1000;
   return t;
 }
@@ -35,9 +35,9 @@ export function titleStateAt(
   len: number,
 ): { chars: number; cursor: boolean } {
   const L = T.charMs.length;
-  let t: number = T.typeStart;
+  let t: number = T.typeStart as number;
   let chars = 0;
-  let lastAt: number = T.typeStart;
+  let lastAt: number = T.typeStart as number;
   for (let i = 0; i < len; i++) {
     if (i > 0) t += T.charMs[(i - 1) % L] / 1000;
     lastAt = t;
