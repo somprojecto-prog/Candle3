@@ -1,3 +1,4 @@
+@'
 import { HERO_TIMING as T } from "@/lib/constants";
 
 declare global {
@@ -25,20 +26,11 @@ export function finishHero(): void {
 
 export function charAt(i: number): number {
   const L = T.charMs.length;
-  let t: number = T.typeStart as number;
-  for (let j = 0; j < i; j++) t += T.charMs[j % L] / 1000;
-  return t;
-}
-
-/** Instante (s) em que o caractere i aparece. */
-export function charAt(i: number): number {
-  const L = T.charMs.length;
   let t = Number(T.typeStart);
   for (let j = 0; j < i; j++) t += Number(T.charMs[j % L]) / 1000;
   return t;
 }
 
-/** Estado do título no instante e (s). */
 export function titleStateAt(
   e: number,
   len: number,
@@ -64,3 +56,4 @@ export function titleStateAt(
   const phase = Math.floor(((e - lastAt) * 1000) / Number(T.blinkMs));
   return { chars, cursor: phase % 2 === 0 };
 }
+'@ | Set-Content -Path lib\heroIntro.ts -Encoding utf8
