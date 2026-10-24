@@ -1,4 +1,3 @@
-@'
 import { HERO_TIMING as T } from "@/lib/constants";
 
 declare global {
@@ -56,4 +55,3 @@ export function titleStateAt(
   const phase = Math.floor(((e - lastAt) * 1000) / Number(T.blinkMs));
   return { chars, cursor: phase % 2 === 0 };
 }
-'@ | Set-Content -Path lib\heroIntro.ts -Encoding utf8
