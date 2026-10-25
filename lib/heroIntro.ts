@@ -25,8 +25,8 @@ export function finishHero(): void {
 
 export function charAt(i: number): number {
   const L = T.charMs.length;
-  let t = Number(T.typeStart);
-  for (let j = 0; j < i; j++) t += Number(T.charMs[j % L]) / 1000;
+  let t = T.typeStart;
+  for (let j = 0; j < i; j++) t += T.charMs[j % L] / 1000;
   return t;
 }
 
@@ -35,23 +35,18 @@ export function titleStateAt(
   len: number,
 ): { chars: number; cursor: boolean } {
   const L = T.charMs.length;
-  let t = Number(T.typeStart);
+  let t = T.typeStart;
   let chars = 0;
-  let lastAt = Number(T.typeStart);
-
+  let lastAt = T.typeStart;
   for (let i = 0; i < len; i++) {
-    if (i > 0) t += Number(T.charMs[(i - 1) % L]) / 1000;
+    if (i > 0) t += T.charMs[(i - 1) % L] / 1000;
     lastAt = t;
     if (e >= t) chars = i + 1;
   }
 
-  if (e < Number(T.cursor) || e >= Number(T.cursorOff)) {
-    return { chars, cursor: false };
-  }
-  if (len === 0 || e < lastAt) {
-    return { chars, cursor: true };
-  }
+  if (e < T.cursor || e >= T.cursorOff) return { chars, cursor: false };
+  if (len === 0 || e < lastAt) return { chars, cursor: true };
 
-  const phase = Math.floor(((e - lastAt) * 1000) / Number(T.blinkMs));
+  const phase = Math.floor(((e - lastAt) * 1000) / T.blinkMs);
   return { chars, cursor: phase % 2 === 0 };
 }

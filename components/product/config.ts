@@ -15,9 +15,14 @@ export const FIT = {
   box: { size: [2.26, 1.5, 2.36] as const, bottomY: -0.47 },
 } as const;
 
-export const FLOAT = { amp: 0.045, tilt: 0.018, period: 5.5 } as const;
+export const FLOAT = { amp: 0.03, tilt: 0.012, period: 7.5 } as const;
 
 export const probeEnabled = (): boolean =>
   process.env.NODE_ENV !== "production" &&
   typeof window !== "undefined" &&
   new URLSearchParams(window.location.search).get("probe") === "1";
+
+export const tuneEnabled = (): boolean =>
+  process.env.NODE_ENV !== "production" &&
+  typeof window !== "undefined" &&
+  new URLSearchParams(window.location.search).get("tune") === "1";

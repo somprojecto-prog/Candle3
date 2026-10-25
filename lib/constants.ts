@@ -46,6 +46,9 @@ export const HERO_DUR = {
 export const HEADER_H = 72;
 export const SMOOTH_SCROLL = true;
 
+/** 0 = no width gate (everyone sees story). Raise to 768 if mobile text overlaps product. */
+export const STORY_MIN_WIDTH: number = 0;
+
 export const SECTION_IDS = {
   top: "top",
   product: "product",

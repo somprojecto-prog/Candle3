@@ -1,5 +1,7 @@
 import * as THREE from "three";
 import { COLORS } from "@/lib/constants";
+import { lookAzim } from "./camState";
+import { LOOK } from "./lookConfig";
 
 export interface ProductMaterials {
   box: THREE.MeshPhysicalMaterial;
@@ -10,16 +12,28 @@ export interface ProductMaterials {
   dispose: () => void;
 }
 
-const SHEEN = new THREE.Color("#5A5A5A");
+const SHEEN = "#6A6A6A";
 
-function trackEnv(mat: THREE.MeshPhysicalMaterial, intensity: number): void {
-  mat.envMapIntensity = intensity;
+function setGrey(mat: THREE.MeshPhysicalMaterial, v: number): void {
+  const k = v / 255;
+  mat.color.setRGB(k, k, k, THREE.SRGBColorSpace);
+}
+
+function live(mat: THREE.MeshPhysicalMaterial, albedo: () => number, env: () => number): void {
+  setGrey(mat, albedo());
+  let seen = LOOK.rev;
   mat.onBeforeRender = (_renderer, scene) => {
-    const env = scene.environment;
-    if (mat.envMap !== env) {
-      mat.envMap = env;
+    if (seen !== LOOK.rev) {
+      seen = LOOK.rev;
+      setGrey(mat, albedo());
+    }
+    mat.envMapIntensity = env();
+    const e = scene.environment;
+    if (mat.envMap !== e) {
+      mat.envMap = e;
       mat.needsUpdate = true;
     }
+    mat.envMapRotation.y = lookAzim(scene);
   };
 }
 
@@ -27,42 +41,45 @@ export function createProductMaterials(doubleSide: boolean): ProductMaterials {
   const side = doubleSide ? THREE.DoubleSide : THREE.FrontSide;
 
   const box = new THREE.MeshPhysicalMaterial({
-    color: "#262626",
     roughness: 0.72,
     metalness: 0,
     sheen: 0.6,
-    sheenColor: SHEEN,
-    sheenRoughness: 0.55,
+    sheenColor: new THREE.Color(SHEEN),
+    sheenRoughness: 0.5,
     side,
   });
+  live(box, () => LOOK.albedo.box, () => LOOK.matEnv);
+
   const tray = new THREE.MeshPhysicalMaterial({
-    color: "#1E1E1E",
     roughness: 0.85,
     metalness: 0,
     sheen: 0.5,
-    sheenColor: SHEEN,
-    sheenRoughness: 0.55,
+    sheenColor: new THREE.Color(SHEEN),
+    sheenRoughness: 0.5,
     side,
   });
+  live(tray, () => LOOK.albedo.tray, () => LOOK.matEnv);
+
+  const lid = new THREE.MeshPhysicalMaterial({
+    roughness: 0.36,
+    metalness: 0.3,
+    clearcoat: 0.4,
+    clearcoatRoughness: 0.15,
+    side,
+  });
+  live(lid, () => LOOK.albedo.lid, () => LOOK.matEnv);
+
   const jar = new THREE.MeshPhysicalMaterial({
-    color: "#0E0E0E",
     roughness: 0.12,
     metalness: 0,
     clearcoat: 1,
     clearcoatRoughness: 0.06,
-    specularIntensity: 1,
     ior: 1.5,
+    specularIntensity: 1,
     side,
   });
-  trackEnv(jar, 2);
-  const lid = new THREE.MeshPhysicalMaterial({
-    color: "#222222",
-    roughness: 0.36,
-    metalness: 0.3,
-    clearcoat: 0.4,
-    side,
-  });
-  trackEnv(lid, 1.2);
+  live(jar, () => LOOK.albedo.jar, () => LOOK.jarEnv);
+
   const gold = new THREE.MeshStandardMaterial({
     color: COLORS.gold,
     roughness: 0.3,

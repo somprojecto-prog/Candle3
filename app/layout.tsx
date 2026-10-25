@@ -1,6 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono, Playfair_Display } from "next/font/google";
-import { BRAND, HERO_TIMING, MODEL_PATH } from "@/lib/constants";
+import {
+  BRAND,
+  HERO_TIMING,
+  MODEL_PATH,
+  STORY_MIN_WIDTH,
+} from "@/lib/constants";
 import "./globals.css";
 
 const display = Playfair_Display({
@@ -45,13 +50,10 @@ var gl=false;
 try{var c=document.createElement("canvas");gl=!!(c.getContext("webgl2")||c.getContext("webgl"));}catch(e){}
 var failed=false;
 try{failed=sessionStorage.getItem("story:failed")==="1";}catch(e){}
-on = gl && !failed;
-if (DEV) {
-  var q = new URLSearchParams(location.search).get("story");
-  if (q === "on") on = true;
-  else if (q === "off") on = false;
-}
-d.dataset.story = on ? "on" : "off";
+on=innerWidth>=${STORY_MIN_WIDTH}&&gl&&!failed;
+if(${DEV}){var q=new URLSearchParams(location.search).get("story");if(q==="on")on=true;else if(q==="off")on=false;}
+}catch(e){}
+d.dataset.story=on?"on":"off";
 var h=location.hash;
 if(!rm&&(h===""||h==="#top")&&(window.scrollY||d.scrollTop||0)===0){
 window.__heroT0=performance.now();d.dataset.hero="playing";

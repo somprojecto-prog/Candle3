@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { STORY_FOCUS } from "@/lib/story";
+import { camState } from "@/components/product/camState";
 
 export interface StoryCamKey {
   target: readonly [number, number, number];
@@ -69,6 +70,8 @@ export function sampleStoryCamera(
 
   _sph.set(dist, Math.PI / 2 - elev, azim);
   _off.setFromSpherical(_sph);
+  // Azimuth before framing shift — LightRig follows this
+  camState.azim = Math.atan2(_off.x, _off.z);
   camera.position.copy(_target).add(_off);
   camera.lookAt(_target);
   camera.updateMatrix();
@@ -87,3 +90,7 @@ export function sampleStoryCamera(
   const halfW = halfH * aspect;
   camera.position.addScaledVector(_right, -ndcX * halfW).addScaledVector(_up, -ndcY * halfH);
 }
+
+
+/** Live target for BackdropGlow follow */
+export const currentTarget = _target;

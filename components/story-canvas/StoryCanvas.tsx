@@ -3,8 +3,9 @@
 import { Component, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Canvas, type RootState } from "@react-three/fiber";
 import * as THREE from "three";
+import { probeEnabled } from "@/components/product/config";
+import { LOOK } from "@/components/product/lookConfig";
 import { failStory } from "@/lib/story";
-import StoryPoster from "./StoryPoster";
 import StoryScene from "./StoryScene";
 
 const CAMERA = { fov: 28, near: 0.1, far: 60, position: [0, 0, 8] as [number, number, number] };
@@ -12,8 +13,9 @@ const GL = {
   alpha: true,
   antialias: true,
   powerPreference: "high-performance" as const,
-  toneMapping: THREE.ACESFilmicToneMapping,
+  toneMapping: THREE.NeutralToneMapping,
 };
+const GL_PROBE = { ...GL, preserveDrawingBuffer: true };
 const DPR: [number, number] = [1, 1.75];
 const RESTORE_TIMEOUT_MS = 2000;
 
@@ -56,6 +58,8 @@ export default function StoryCanvas() {
   );
 
   const handleCreated = useCallback(({ gl, invalidate }: RootState) => {
+    gl.toneMapping = THREE.NeutralToneMapping;
+    gl.toneMappingExposure = LOOK.exposure;
     gl.setClearColor(0x000000, 0);
     detachRef.current?.();
 
@@ -86,11 +90,20 @@ export default function StoryCanvas() {
   return (
     <div ref={wrapRef} className="pointer-events-none absolute inset-0">
       <CanvasBoundary>
-        <Canvas frameloop="demand" dpr={DPR} camera={CAMERA} gl={GL} onCreated={handleCreated}>
+        <Canvas
+          frameloop="demand"
+          dpr={DPR}
+          camera={CAMERA}
+          gl={probeEnabled() ? GL_PROBE : GL}
+          onCreated={handleCreated}
+        >
           <StoryScene onReady={handleReady} />
         </Canvas>
       </CanvasBoundary>
-      <StoryPoster hidden={ready} />
+      {/* Poster optional — omit if StoryPoster missing */}
+      {!ready && (
+        <div className="pointer-events-none absolute inset-0 bg-ink/40" aria-hidden />
+      )}
     </div>
   );
 }
