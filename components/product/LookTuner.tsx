@@ -39,9 +39,11 @@ export default function LookTuner() {
   const [, setRev] = useState(0);
   useEffect(() => subscribeLook(() => setRev(LOOK.rev)), []);
 
-  const set = (key: keyof typeof LOOK_DEFAULTS, v: number) => {
-    if (key === "albedo") return;
-    (LOOK as Record<string, unknown>)[key] = v;
+  const set = (
+    key: Exclude<keyof typeof LOOK_DEFAULTS, "albedo">,
+    v: number,
+  ) => {
+    LOOK[key] = v;
     bumpLook();
   };
 
@@ -51,7 +53,8 @@ export default function LookTuner() {
   };
 
   const copy = () => {
-    const { rev: _, ...rest } = LOOK;
+        const { rev, ...rest } = LOOK;
+    void rev;
     void navigator.clipboard.writeText(JSON.stringify(rest, null, 2));
   };
 
