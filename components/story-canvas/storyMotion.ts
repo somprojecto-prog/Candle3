@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { BOX_FADE_SCALE } from "@/components/product/config";
 
 export interface Delta {
   x: number;
@@ -40,3 +41,13 @@ export function lidDelta(stage: number, out: Delta): Delta {
 
 export const boxLiftY = (l: number): number => (l <= 1 ? l * 1.6 : 1.6 + (l - 1) * 4.0);
 export const boxOpacity = (l: number): number => 1 - THREE.MathUtils.smoothstep(l, 1.35, 1.9);
+
+
+/** Scale during box fade (same smoothstep window as opacity). */
+export function boxScale(lift: number): number {
+  const a = 1.35;
+  const b = 1.9;
+  const x = Math.min(Math.max((lift - a) / (b - a), 0), 1);
+  const s = x * x * (3 - 2 * x);
+  return 1 - BOX_FADE_SCALE * s;
+}

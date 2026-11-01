@@ -17,7 +17,7 @@ export default function Footer() {
               <a
                 key={item.href}
                 href={item.href}
-                className="text-[0.9375rem] text-muted transition-colors hover:text-fg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
+                className="text-[0.9375rem] text-muted transition-colors duration-150 ease-out hover:text-gold motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
               >
                 {item.label}
               </a>

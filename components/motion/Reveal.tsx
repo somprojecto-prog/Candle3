@@ -4,6 +4,7 @@ import { useRef, type ElementType, type ReactNode } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
+import { REVEAL } from "@/lib/constants";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -27,27 +28,42 @@ export default function Reveal({
       const el = ref.current;
       if (!el) return;
 
-      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const rect = el.getBoundingClientRect();
-
-      if (reduced || rect.bottom < 0) {
+      const show = () => {
         gsap.set(el, { opacity: 1, y: 0 });
-        return;
+      };
+
+      try {
+        const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const rect = el.getBoundingClientRect();
+
+        if (reduced || rect.bottom < 0) {
+          show();
+          return;
+        }
+
+        const from = { opacity: 0, y: REVEAL.y };
+        const to = {
+          opacity: 1,
+          y: 0,
+          duration: REVEAL.duration,
+          ease: REVEAL.ease,
+          delay,
+        };
+
+        if (rect.top < window.innerHeight * 0.88) {
+          gsap.fromTo(el, from, to);
+          return;
+        }
+
+        gsap.fromTo(el, from, {
+          ...to,
+          scrollTrigger: { trigger: el, start: "top 88%", once: true },
+        });
+      } catch {
+        show();
       }
-
-      const vars = { opacity: 1, y: 0, duration: 0.45, delay, ease: "power3.out" };
-
-      if (rect.top < window.innerHeight * 0.88) {
-        gsap.fromTo(el, { opacity: 0, y: 16 }, vars);
-        return;
-      }
-
-      gsap.fromTo(el, { opacity: 0, y: 16 }, {
-        ...vars,
-        scrollTrigger: { trigger: el, start: "top 88%", once: true },
-      });
     },
-    { scope: ref }
+    { scope: ref, dependencies: [delay] },
   );
 
   return (

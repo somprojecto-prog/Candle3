@@ -1,4 +1,4 @@
-import { CODE, SECTION_IDS } from "@/lib/constants";
+import { CODE, REVEAL, SECTION_IDS } from "@/lib/constants";
 import { STATEMENT } from "@/lib/content";
 import StorySection from "@/components/story/StorySection";
 import ProductSlot from "@/components/story/ProductSlot";
@@ -10,9 +10,11 @@ export default function ProductStatement() {
     <StorySection id={SECTION_IDS.product} step="reveal" tone="base">
       <div className="grid w-full items-center gap-10 md:grid-cols-12 md:gap-x-8">
         <div className="order-1 nostory:md:col-span-6 story:col-span-5">
-          <Reveal>
-            <CodeComment className="mb-4">{CODE.statement}</CodeComment>
-            <h2 className="text-h2 text-fg">{STATEMENT.title}</h2>
+          <Reveal delay={REVEAL.codeDelay} className="mb-4">
+            <CodeComment>{CODE.statement}</CodeComment>
+          </Reveal>
+          <Reveal as="h2" className="text-h2 text-fg">
+            {STATEMENT.title}
           </Reveal>
           <Reveal delay={0.06} className="mt-6">
             <p className="max-w-[40ch] text-body text-muted">{STATEMENT.positioning}</p>

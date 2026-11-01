@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { lookAzim } from "./camState";
-import { LOOK, LOOK_INFO, subscribeLook } from "./lookConfig";
+import { LOOK, LOOK_INFO, revealActive, revealFactor, subscribeLook } from "./lookConfig";
 
 export default function LightRig() {
   const invalidate = useThree((s) => s.invalidate);
@@ -18,19 +18,31 @@ export default function LightRig() {
 
   useEffect(() => subscribeLook(invalidate), [invalidate]);
 
+  useEffect(() => {
+    let raf = 0;
+    const loop = () => {
+      if (!revealActive()) return;
+      invalidate();
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [invalidate]);
+
   useFrame(({ gl, scene }) => {
     if (gl.toneMapping !== THREE.NeutralToneMapping) gl.toneMapping = THREE.NeutralToneMapping;
     gl.toneMappingExposure = LOOK.exposure;
     LOOK_INFO.tone = gl.toneMapping;
     LOOK_INFO.exposure = gl.toneMappingExposure;
 
+    const r = revealFactor();
     if (rig.current) rig.current.rotation.y = lookAzim(scene);
     if (hemi.current) hemi.current.intensity = LOOK.hemi;
-    if (key.current) key.current.intensity = LOOK.key;
-    if (fill.current) fill.current.intensity = LOOK.fill;
-    if (top.current) top.current.intensity = LOOK.top;
-    if (rimL.current) rimL.current.intensity = LOOK.rimL;
-    if (rimR.current) rimR.current.intensity = LOOK.rimR;
+    if (key.current) key.current.intensity = LOOK.key * r.key;
+    if (fill.current) fill.current.intensity = LOOK.fill * r.fill;
+    if (top.current) top.current.intensity = LOOK.top * r.top;
+    if (rimL.current) rimL.current.intensity = LOOK.rimL * r.rim;
+    if (rimR.current) rimR.current.intensity = LOOK.rimR * r.rim;
   });
 
   return (

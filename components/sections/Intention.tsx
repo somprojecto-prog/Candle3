@@ -1,4 +1,4 @@
-import { CODE, SECTION_IDS } from "@/lib/constants";
+import { CODE, REVEAL, SECTION_IDS } from "@/lib/constants";
 import { INTENTION } from "@/lib/content";
 import StorySection from "@/components/story/StorySection";
 import ProductSlot from "@/components/story/ProductSlot";
@@ -11,9 +11,11 @@ export default function Intention() {
     <StorySection id={SECTION_IDS.about} step="intention" tone="raised">
       <div className="grid w-full items-center gap-10 md:grid-cols-12 md:gap-x-8">
         <div className="order-1 md:order-2 nostory:md:col-span-6 story:col-span-5 story:col-start-8">
-          <Reveal>
-            <CodeComment className="mb-4">{CODE.intention}</CodeComment>
-            <h2 className="text-h2 text-fg">{INTENTION.title}</h2>
+          <Reveal delay={REVEAL.codeDelay} className="mb-4">
+            <CodeComment>{CODE.intention}</CodeComment>
+          </Reveal>
+          <Reveal as="h2" className="text-h2 text-fg">
+            {INTENTION.title}
           </Reveal>
           <SpecList items={INTENTION.items} className="mt-10" />
         </div>

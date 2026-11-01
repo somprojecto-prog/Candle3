@@ -1,4 +1,4 @@
-import { CODE, CHECKOUT_URL, SECTION_IDS } from "@/lib/constants";
+import { CODE, CHECKOUT_URL, REVEAL, SECTION_IDS } from "@/lib/constants";
 import { CLOSING } from "@/lib/content";
 import Section from "@/components/ui/Section";
 import Reveal from "@/components/motion/Reveal";
@@ -9,9 +9,11 @@ export default function Closing() {
   return (
     <Section id={SECTION_IDS.closing} tone="base">
       <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
-        <Reveal>
-          <CodeComment className="mb-4">{CODE.closing}</CodeComment>
-          <h2 className="text-h1 text-fg">{CLOSING.title}</h2>
+        <Reveal delay={REVEAL.codeDelay} className="mb-4">
+          <CodeComment>{CODE.closing}</CodeComment>
+        </Reveal>
+        <Reveal as="h2" className="text-h1 text-fg">
+          {CLOSING.title}
         </Reveal>
         <Reveal delay={0.06} className="mt-6">
           <p className="text-body text-muted">{CLOSING.support}</p>

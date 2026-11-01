@@ -53,7 +53,7 @@ export default function LookTuner() {
   };
 
   const copy = () => {
-        const { rev, ...rest } = LOOK;
+    const { rev, ...rest } = LOOK;
     void rev;
     void navigator.clipboard.writeText(JSON.stringify(rest, null, 2));
   };

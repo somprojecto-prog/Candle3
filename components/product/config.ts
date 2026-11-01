@@ -15,7 +15,10 @@ export const FIT = {
   box: { size: [2.26, 1.5, 2.36] as const, bottomY: -0.47 },
 } as const;
 
-export const FLOAT = { amp: 0.03, tilt: 0.012, period: 7.5 } as const;
+export const FLOAT = { amp: 0.014, tilt: 0.006, period: 10 } as const;
+export const FLOAT_INTERVAL_MS = 50;
+export const BOX_FADE_SCALE = 0.03;
+export const PARALLAX: { enabled: boolean; maxPx: number } = { enabled: false, maxPx: 4 };
 
 export const probeEnabled = (): boolean =>
   process.env.NODE_ENV !== "production" &&

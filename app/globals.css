@@ -57,7 +57,7 @@ body {
 
 .js [data-reveal] {
   opacity: 0;
-  transform: translateY(16px);
+  transform: translateY(24px);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -96,7 +96,8 @@ html[data-hero="playing"] [data-hero-comment] {
 }
 html[data-hero="playing"] [data-hero-sub] {
   opacity: 0;
-  animation: heroFade 400ms ease-out 1700ms forwards;
+  transform: translateY(12px);
+  animation: heroUp 400ms ease-out 1700ms forwards;
 }
 html[data-hero="playing"] [data-hero-product] {
   opacity: 0;
@@ -105,7 +106,7 @@ html[data-hero="playing"] [data-hero-product] {
 }
 html[data-hero="playing"] [data-hero-cta] {
   opacity: 0;
-  transform: translateY(8px);
+  transform: translateY(16px);
   animation: heroUp 300ms ease-out 2300ms forwards;
 }
 html[data-hero="playing"] [data-hero-scroll] {

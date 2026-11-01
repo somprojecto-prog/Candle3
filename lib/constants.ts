@@ -43,6 +43,9 @@ export const HERO_DUR = {
   scroll: 300,
 } as const;
 
+/** Reveal de secção (C usa em Reveal.tsx; o CSS inicial de [data-reveal] usa o mesmo y). */
+export const REVEAL = { y: 24, duration: 0.55, ease: "power2.out", codeDelay: 0.12 } as const;
+
 export const HEADER_H = 72;
 export const SMOOTH_SCROLL = true;
 

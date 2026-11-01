@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
 import { FIT } from "@/components/product/config";
 import { createProductMaterials } from "@/components/product/materials";
-import { boxLiftY, boxOpacity, lidDelta, makeDelta } from "./storyMotion";
+import { addLidFloat } from "./lidFloat";
+import { boxLiftY, boxOpacity, boxScale, lidDelta, makeDelta } from "./storyMotion";
 import { smooth } from "./storySmooth";
 import { sampleTrack, TRACKS } from "./storyTable";
 
@@ -31,7 +32,9 @@ export default function StoryPlaceholder() {
     return m;
   }, []);
 
-  useFrame(() => {
+  useEffect(() => () => mats.dispose(), [mats]);
+
+  useFrame((state) => {
     const box = boxRef.current;
     const lid = lidRef.current;
     const lift = sampleTrack(TRACKS.boxLift, smooth.phase);
@@ -40,6 +43,7 @@ export default function StoryPlaceholder() {
     if (box) {
       const o = boxOpacity(lift);
       box.position.y = BOX_CY + boxLiftY(lift);
+      box.scale.setScalar(boxScale(lift));
       mats.box.opacity = o;
       mats.box.depthWrite = o >= 1;
       box.visible = o >= 0.01;
@@ -47,6 +51,7 @@ export default function StoryPlaceholder() {
 
     if (lid) {
       lidDelta(stage, delta);
+      addLidFloat(delta, stage, state.clock.elapsedTime);
       lid.position.set(delta.x, LID_CY + delta.y, delta.z);
       lid.rotation.set(delta.rx, delta.ry, delta.rz);
     }
@@ -55,12 +60,12 @@ export default function StoryPlaceholder() {
   return (
     <group>
       <mesh position={[0, FIT.jar.centerY, 0]} material={mats.jar}>
-        <cylinderGeometry args={[JAR_R, JAR_R, FIT.jar.height, 48]} />
+        <cylinderGeometry args={[JAR_R, JAR_R, FIT.jar.height, 64]} />
       </mesh>
 
       <group ref={lidRef} position={[0, LID_CY, 0]}>
         <mesh material={mats.lid}>
-          <cylinderGeometry args={[LID_R, LID_R, LID_H, 48]} />
+          <cylinderGeometry args={[LID_R, LID_R, LID_H, 64]} />
         </mesh>
       </group>
 
