@@ -1,17 +1,20 @@
 export const BRAND = "CTRL + SHIFT + CANDLE";
 export const TAGLINE = "Focus. Reset. Elevate.";
 export const COLORS = {
-  ink: "#0A0A0A",
-  ink2: "#121212",
-  fg: "#EDEDED",
-  muted: "#8A8A8A",
-  code: "#5C5C5C",
-  gold: "#C9A84C",
-  goldHi: "#D4B45E",
-  line: "#2A2A2A",
+  ink: "#050505",
+  ink2: "#0C0C0C",
+  fg: "#F5F5F5",
+  muted: "#A3A3A3",
+  code: "#6B6B6B",
+  gold: "#C9A227",
+  goldHi: "#E0B82E",
+  goldActive: "#A88B1F",
+  line: "#1F1F1F",
+  status: "#4ADE80",
 } as const;
 
 export const CODE = {
+  init: "// system initializing",
   focus: "// focus mode engaged",
   statement: "// statement",
   intention: "// intention",
@@ -20,41 +23,37 @@ export const CODE = {
   status: "status: ready",
 } as const;
 
+/** Sequência do Hero (s desde t0 = script inline). */
 export const HERO_TIMING = {
-  comment: 0.2,
-  cursor: 0.4,
-  typeStart: 0.6,
-  cursorOff: 1.7,
-  subtitle: 1.7,
-  product: 2.0,
-  cta: 2.3,
-  scroll: 2.6,
-  done: 2.6,
-  failsafe: 3.4,
-  charMs: [40, 38, 42, 39, 41, 40, 38, 42, 40, 39],
-  blinkMs: 530,
+  labelInit: 0.3,
+  labelFocus: 0.8,
+  headline: 1.0,
+  sub: 1.4,
+  cta: 1.4,
+  product: 1.6,
+  done: 2.2,
+  failsafe: 3.0,
 } as const;
 
+/** Durações (ms). O CSS do A usa estes números. */
 export const HERO_DUR = {
-  comment: 160,
-  subtitle: 400,
-  product: 500,
-  cta: 300,
-  scroll: 300,
+  label: 400,
+  headline: 600,
+  sub: 500,
+  cta: 500,
+  product: 600,
 } as const;
 
-/** Reveal de secção (C usa em Reveal.tsx; o CSS inicial de [data-reveal] usa o mesmo y). */
-export const REVEAL = { y: 24, duration: 0.55, ease: "power2.out", codeDelay: 0.12 } as const;
-
-export const HEADER_H = 72;
+export const HEADER_H = 72; // px (layout); o header encolhe só visualmente
 export const SMOOTH_SCROLL = true;
 
-/** 0 = no width gate (everyone sees story). Raise to 768 if mobile text overlaps product. */
+/** 0 = sem gate de largura. Fallback se o mobile pesar: 768. */
 export const STORY_MIN_WIDTH: number = 0;
 
 export const SECTION_IDS = {
   top: "top",
   product: "product",
+  statement: "statement",
   about: "about",
   notes: "notes",
   offer: "offer",
@@ -67,11 +66,25 @@ export const NAV = [
   { label: "About", href: "#about" },
 ] as const;
 
-export const SHOP_URL = "#offer";
-export const CHECKOUT_URL = "#checkout";
+export const SHOP_URL = "#offer"; // Header "Shop" e CTA do Hero rolam até ao ProductSpecs
+export const CHECKOUT_URL = "#checkout"; // TODO: URL real (CTAs do ProductSpecs e do Closing)
 
 export const MODEL_PATH = "/models/candle.glb";
 export const EMBLEM_PATH = "/brand/emblem.png";
 export const MARK_PATH = "/brand/mark.svg";
 
-export type ProductView = "hero" | "statement" | "intention" | "offer";
+export type ProductView = "hero" | "reveal" | "intention" | "offer";
+
+export interface PhotoAsset {
+  src: string;
+  width: number;
+  height: number;
+  alt: string;
+}
+
+/** Fotografias reais (null = desativado; tudo o que as usa é opcional). */
+export const PHOTOS: {
+  revealOpen: PhotoAsset | null;
+  intention: PhotoAsset | null;
+  specs: PhotoAsset | null;
+} = { revealOpen: null, intention: null, specs: null };

@@ -17,26 +17,17 @@ const loading = (view: ProductView) =>
     );
   };
 
-const Hero = dynamic<ProductViewerProps>(() => import("./ProductViewer"), {
-  ssr: false,
-  loading: loading("hero"),
-});
-const Statement = dynamic<ProductViewerProps>(() => import("./ProductViewer"), {
-  ssr: false,
-  loading: loading("statement"),
-});
+const Hero = dynamic<ProductViewerProps>(() => import("./ProductViewer"), { ssr: false, loading: loading("hero") });
+const Reveal = dynamic<ProductViewerProps>(() => import("./ProductViewer"), { ssr: false, loading: loading("reveal") });
 const Intention = dynamic<ProductViewerProps>(() => import("./ProductViewer"), {
   ssr: false,
   loading: loading("intention"),
 });
-const Offer = dynamic<ProductViewerProps>(() => import("./ProductViewer"), {
-  ssr: false,
-  loading: loading("offer"),
-});
+const Offer = dynamic<ProductViewerProps>(() => import("./ProductViewer"), { ssr: false, loading: loading("offer") });
 
 const VIEWERS: Record<ProductView, ComponentType<ProductViewerProps>> = {
   hero: Hero,
-  statement: Statement,
+  reveal: Reveal,
   intention: Intention,
   offer: Offer,
 };

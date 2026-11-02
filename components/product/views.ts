@@ -1,45 +1,56 @@
 import type { ProductView } from "@/lib/constants";
 
 export interface ViewConfig {
-  box: boolean;
+  box: boolean; // caixa visível
+  /** Progresso da abertura aplicado à caixa: 0 fechada, ≈0.55 pairando e inclinada. */
+  reveal: number;
   lid: "seated" | "off";
   camera: {
     target: [number, number, number];
-    dist: number;
+    dist: number; // legado: a distância real vem de `fit` via viewDist()
     elev: number;
     azim: number;
     fov: number;
   };
+  /** Silhueta projetada (azim/elev incluídos) e quanto do wrapper deve ocupar. */
   fit: { height: number; width: number; fillH: number; maxW: number };
-  dragRange: number;
+  dragRange: number; // legado (sem drag)
 }
 
+// ÚNICA tabela de vistas estáticas. Afine com /dev/product?probe=1&tune=1&az=&el=&d=&ty=
 export const VIEWS: Record<ProductView, ViewConfig> = {
+  // caixa fechada ¾: 80–92% da largura do wrapper
   hero: {
-    box: false,
+    box: true,
+    reveal: 0,
     lid: "seated",
-    camera: { target: [0, -0.05, 0], dist: 6.4, elev: 14, azim: 30, fov: 28 },
-    fit: { height: 2.4, width: 3.1, fillH: 0.88, maxW: 0.9 },
+    camera: { target: [0, 0, 0], dist: 7.8, elev: 13, azim: 30, fov: 28 },
+    fit: { height: 2.6, width: 3.15, fillH: 0.88, maxW: 0.9 },
     dragRange: 50,
   },
-  statement: {
-    box: false,
+  // vela aberta com a capa pairando (reveal ≈ 0.55): limitada pela altura
+  reveal: {
+    box: true,
+    reveal: 0.55,
     lid: "seated",
-    camera: { target: [0, -0.05, 0], dist: 6.2, elev: 16, azim: 12, fov: 28 },
-    fit: { height: 2.4, width: 2.7, fillH: 0.8, maxW: 0.88 },
+    camera: { target: [0, 0.85, 0], dist: 12, elev: 16, azim: 14, fov: 28 },
+    fit: { height: 4.5, width: 3.2, fillH: 0.9, maxW: 0.9 },
     dragRange: 30,
   },
+  // close-up da vela aberta, tampa assente
   intention: {
     box: false,
-    lid: "off",
-    camera: { target: [0, -0.35, 0], dist: 4.2, elev: 32, azim: -25, fov: 28 },
-    fit: { height: 2.6, width: 3.0, fillH: 0.8, maxW: 0.88 },
+    reveal: 1,
+    lid: "seated",
+    camera: { target: [0, -0.2, 0], dist: 6, elev: 20, azim: -25, fov: 28 },
+    fit: { height: 2.3, width: 3.0, fillH: 0.8, maxW: 0.88 },
     dragRange: 25,
   },
   offer: {
     box: true,
+    reveal: 0,
     lid: "seated",
-    camera: { target: [0, 0.0, 0], dist: 7.8, elev: 14, azim: 32, fov: 28 },
+    camera: { target: [0, 0, 0], dist: 7.8, elev: 14, azim: 32, fov: 28 },
     fit: { height: 2.75, width: 3.2, fillH: 0.8, maxW: 0.88 },
     dragRange: 35,
   },

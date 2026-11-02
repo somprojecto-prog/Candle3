@@ -11,17 +11,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#0A0A0A",
-        ink2: "#121212",
-        fg: "#EDEDED",
-        muted: "#8A8A8A",
-        code: "#5C5C5C",
-        gold: "#C9A84C",
-        "gold-hi": "#D4B45E",
-        line: "#2A2A2A",
+        ink: "#050505",
+        ink2: "#0C0C0C",
+        fg: "#F5F5F5",
+        muted: "#A3A3A3",
+        code: "#6B6B6B",
+        gold: "#C9A227",
+        "gold-hi": "#E0B82E",
+        "gold-active": "#A88B1F",
+        line: "#1F1F1F",
+        status: "#4ADE80",
       },
       fontFamily: {
-        display: ["var(--font-display)", "Georgia", "serif"],
+        display: ["var(--font-sans)", "system-ui", "sans-serif"],
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
         mono: [
           "var(--font-mono)",
@@ -32,28 +34,39 @@ const config: Config = {
         ],
       },
       fontSize: {
+        display: [
+          "clamp(2.5rem,1.624rem+3.596vw,4.5rem)",
+          { lineHeight: "1.05", letterSpacing: "-0.02em", fontWeight: "500" },
+        ],
         h1: [
-          "clamp(2.5rem, 1.6rem + 3.2vw, 4.5rem)",
-          { lineHeight: "1.1", letterSpacing: "-0.02em", fontWeight: "500" },
+          "clamp(2rem,1.562rem+1.798vw,3rem)",
+          { lineHeight: "1.1", letterSpacing: "-0.015em", fontWeight: "500" },
         ],
         h2: [
-          "clamp(1.75rem, 1.1rem + 2.2vw, 3rem)",
-          { lineHeight: "1.15", letterSpacing: "-0.01em", fontWeight: "500" },
+          "clamp(1.5rem,1.281rem+0.899vw,2rem)",
+          { lineHeight: "1.2", letterSpacing: "-0.01em", fontWeight: "500" },
+        ],
+        h3: [
+          "clamp(1.25rem,1.1406rem+0.4494vw,1.5rem)",
+          { lineHeight: "1.3", letterSpacing: "-0.005em", fontWeight: "500" },
         ],
         body: [
-          "clamp(1rem, 0.95rem + 0.2vw, 1.125rem)",
-          { lineHeight: "1.6", fontWeight: "400" },
+          "clamp(1rem,0.945rem+0.2247vw,1.125rem)",
+          { lineHeight: "1.6", letterSpacing: "0", fontWeight: "400" },
+        ],
+        small: ["1rem", { lineHeight: "1.5", letterSpacing: "0", fontWeight: "400" }],
+        label: [
+          "clamp(0.75rem,0.7226rem+0.1124vw,0.8125rem)",
+          { lineHeight: "1.4", letterSpacing: "0.04em", fontWeight: "400" },
+        ],
+        micro: [
+          "0.8125rem",
+          { lineHeight: "1.4", letterSpacing: "0.02em", fontWeight: "400" },
         ],
         btn: [
-          "1rem",
-          { lineHeight: "1.25rem", letterSpacing: "0.04em", fontWeight: "500" },
+          "0.9375rem",
+          { lineHeight: "1", letterSpacing: "0.02em", fontWeight: "500" },
         ],
-        caption: [
-          "0.75rem",
-          { lineHeight: "1.4", letterSpacing: "0.18em", fontWeight: "500" },
-        ],
-        "mono-md": ["0.9375rem", { lineHeight: "1.4" }],
-        "mono-sm": ["0.8125rem", { lineHeight: "1.4" }],
       },
       borderRadius: {
         DEFAULT: "4px",

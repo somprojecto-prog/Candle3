@@ -1,25 +1,24 @@
+import { MathUtils } from "three";
 import { FLOAT } from "@/components/product/config";
+import { choreo } from "./revealChoreo";
+import type { Delta } from "./storyMotion";
+import { motion } from "./storySmooth";
 
-interface Delta {
-  x: number;
-  y: number;
-  z: number;
-  rx: number;
-  ry: number;
-  rz: number;
+/** 1 com a tampa a flutuar (estágio 1); 0 assente e com reduced-motion. */
+export function floatWeight(stage: number): number {
+  if (motion.reduced) return 0;
+  return MathUtils.smoothstep(stage, 0.85, 1.0) * (1 - MathUtils.smoothstep(stage, 2.0, 2.15));
 }
 
-/** Nearly-static lid float between lid stages 1 and 2. Reduced-motion handled by caller (w=0). */
-export function addLidFloat(delta: Delta, stage: number, time: number): void {
-  // window only between stages ~1 and ~2
-  const w = stage > 0.85 && stage < 2.15 ? Math.min(1, Math.min(stage - 0.85, 2.15 - stage) * 4) : 0;
+/** O Invalidator só renderiza em contínuo (≤ 20 fps) com o produto visível. */
+export function floatActive(): boolean {
+  return choreo.visible > 0.01 && floatWeight(choreo.stage) > 0;
+}
+
+export function addLidFloat(out: Delta, stage: number, time: number): void {
+  const w = floatWeight(stage);
   if (w <= 0) return;
-  const reduced =
-    typeof window !== "undefined" &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (reduced) return;
-  const ang = (time / FLOAT.period) * Math.PI * 2;
-  delta.y += Math.sin(ang) * FLOAT.amp * w;
-  delta.rx += Math.sin(ang * 0.7) * FLOAT.tilt * w;
-  delta.rz += Math.cos(ang * 0.9) * FLOAT.tilt * 0.6 * w;
+  const ph = (2 * Math.PI * time) / FLOAT.period;
+  out.y += FLOAT.amp * Math.sin(ph) * w;
+  out.rx += FLOAT.tilt * Math.sin(ph + 1.1) * w;
 }

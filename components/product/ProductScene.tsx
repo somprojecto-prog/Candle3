@@ -1,116 +1,76 @@
 "use client";
 
-import React, {
-  Component,
-  Suspense,
-  useEffect,
-  useRef,
-  type MutableRefObject,
-  type ReactNode,
-} from "react";
+import { Suspense, useEffect, useLayoutEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { ContactShadows, Environment, Lightformer } from "@react-three/drei";
+import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
-import type { ProductView } from "@/lib/constants";
-import { USE_GLB } from "./config";
-import { VIEWS } from "./views";
-import DragRotate, { type DragRotateHandle } from "./DragRotate";
+import { MODEL_PATH, type ProductView } from "@/lib/constants";
+import BackdropGlow, { StageShadow } from "./BackdropGlow";
+import { camState } from "./camState";
+import { GLB_DRACO, USE_GLB } from "./config";
+import GlbBoundary from "./GlbBoundary";
 import ProductModel from "./ProductModel";
 import ProductPlaceholder from "./ProductPlaceholder";
+import StudioLights from "./StudioLights";
+import { VIEWS, viewDist } from "./views";
+
+if (USE_GLB) useGLTF.preload(MODEL_PATH, GLB_DRACO);
+
+export interface DebugCamera {
+  azim?: number;
+  elev?: number;
+  dist?: number;
+  fov?: number;
+  targetY?: number;
+}
 
 interface ProductSceneProps {
   view: ProductView;
-  interactive: boolean;
-  dragRef: MutableRefObject<DragRotateHandle | null>;
   onReady: () => void;
-  debugCamera?: Partial<{
-    azim: number;
-    elev: number;
-    dist: number;
-    fov: number;
-    targetY: number;
-  }>;
+  debugCamera?: DebugCamera;
 }
 
-function StudioLights() {
-  return (
-    <>
-      <ambientLight intensity={0.12} />
-      <directionalLight color="#fff1d6" intensity={2.2} position={[4, 6, 5]} />
-      <spotLight
-        color="#C9A84C"
-        position={[-5, 3, -4]}
-        intensity={25}
-        angle={0.5}
-        penumbra={1}
-      />
-      <Environment resolution={256}>
-        <Lightformer
-          form="rect"
-          intensity={2.5}
-          color="#ffffff"
-          position={[-6, 1, 4]}
-          rotation-y={2.159}
-          scale={[1, 9, 1]}
-        />
-        <Lightformer
-          form="rect"
-          intensity={2.5}
-          color="#ffffff"
-          position={[6, 1, 4]}
-          rotation-y={-2.159}
-          scale={[1, 9, 1]}
-        />
-        <Lightformer
-          form="rect"
-          intensity={0.7}
-          color="#fff1d6"
-          position={[0, 7, 0]}
-          rotation-x={Math.PI / 2}
-          scale={[10, 6, 1]}
-        />
-      </Environment>
-    </>
-  );
-}
+const D2R = Math.PI / 180;
+const _sph = new THREE.Spherical();
+const _off = new THREE.Vector3();
 
-function CameraSetup({
-  view,
-  debug,
-}: {
-  view: ProductView;
-  debug?: ProductSceneProps["debugCamera"];
-}) {
-  const { camera, size, invalidate } = useThree();
+/** Câmera esférica; distância derivada de `fit`. Escreve o azimute para luzes/ambiente (por-canvas em scene.userData). */
+function CameraSetup({ view, debug }: { view: ProductView; debug?: DebugCamera }) {
+  const camera = useThree((s) => s.camera);
+  const scene = useThree((s) => s.scene);
+  const invalidate = useThree((s) => s.invalidate);
+  const width = useThree((s) => s.size.width);
+  const height = useThree((s) => s.size.height);
+
   const cfg = VIEWS[view];
-  const azim = debug?.azim ?? cfg.camera.azim;
-  const elev = debug?.elev ?? cfg.camera.elev;
-  const dist = debug?.dist ?? cfg.camera.dist;
-  const fov = debug?.fov ?? cfg.camera.fov;
-  const ty = debug?.targetY ?? cfg.camera.target[1];
-  const tx = cfg.camera.target[0];
-  const tz = cfg.camera.target[2];
+  const dbg = process.env.NODE_ENV !== "production" ? debug : undefined;
+  const azim = dbg?.azim ?? cfg.camera.azim;
+  const elev = dbg?.elev ?? cfg.camera.elev;
+  const fov = dbg?.fov ?? cfg.camera.fov;
+  const fixedDist = dbg?.dist;
+  const [tx, , tz] = cfg.camera.target;
+  const ty = dbg?.targetY ?? cfg.camera.target[1];
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const cam = camera as THREE.PerspectiveCamera;
-    const aspect = size.width / Math.max(size.height, 1);
-    const d = dist * THREE.MathUtils.clamp(1.78 / aspect, 1, 1.6);
-    const elevR = (elev * Math.PI) / 180;
-    const azimR = (azim * Math.PI) / 180;
+    const aspect = height > 0 ? width / height : 1;
+    const dist = fixedDist ?? viewDist(cfg, aspect, fov);
 
-    cam.position.set(
-      tx + d * Math.cos(elevR) * Math.sin(azimR),
-      ty + d * Math.sin(elevR),
-      tz + d * Math.cos(elevR) * Math.cos(azimR),
-    );
+    _sph.set(dist, Math.PI / 2 - THREE.MathUtils.clamp(elev, -89, 89) * D2R, azim * D2R);
+    _off.setFromSpherical(_sph);
+    cam.position.set(tx + _off.x, ty + _off.y, tz + _off.z);
     cam.fov = fov;
     cam.near = 0.1;
     cam.far = 60;
     cam.updateProjectionMatrix();
     cam.lookAt(tx, ty, tz);
     cam.updateMatrixWorld();
+
+    const az = Math.atan2(_off.x, _off.z);
+    scene.userData.lookAzim = az;
+    camState.azim = az;
     invalidate();
-  }, [camera, invalidate, size.width, size.height, azim, elev, dist, fov, tx, ty, tz]);
+  }, [camera, scene, invalidate, width, height, cfg, azim, elev, fov, fixedDist, tx, ty, tz]);
 
   return null;
 }
@@ -132,29 +92,8 @@ function FirstFrame({ onReady }: { onReady: () => void }) {
   return null;
 }
 
-class GlbBoundary extends Component<
-  { fallback: ReactNode; children: ReactNode },
-  { failed: boolean }
-> {
-  state = { failed: false };
-  static getDerivedStateFromError() {
-    return { failed: true };
-  }
-  componentDidCatch(error: Error) {
-    console.error("[GlbBoundary]", error);
-  }
-  render() {
-    return this.state.failed ? this.props.fallback : this.props.children;
-  }
-}
-
-export default function ProductScene({
-  view,
-  interactive,
-  dragRef,
-  onReady,
-  debugCamera,
-}: ProductSceneProps) {
+/** Vista estática: sem drag, sem rotação, sem flutuação. */
+export default function ProductScene({ view, onReady, debugCamera }: ProductSceneProps) {
   const cfg = VIEWS[view];
 
   const placeholder = (
@@ -168,29 +107,20 @@ export default function ProductScene({
     <>
       <StudioLights />
       <CameraSetup view={view} debug={debugCamera} />
+      <BackdropGlow size={6.5} center={cfg.camera.target} />
 
-      <DragRotate enabled={interactive} range={cfg.dragRange} handleRef={dragRef}>
-        {USE_GLB ? (
-          <GlbBoundary fallback={placeholder}>
-            <Suspense fallback={null}>
-              <ProductModel view={view} />
-              <FirstFrame onReady={onReady} />
-            </Suspense>
-          </GlbBoundary>
-        ) : (
-          placeholder
-        )}
-      </DragRotate>
+      {USE_GLB ? (
+        <GlbBoundary fallback={placeholder}>
+          <Suspense fallback={null}>
+            <ProductModel view={view} />
+            <FirstFrame onReady={onReady} />
+          </Suspense>
+        </GlbBoundary>
+      ) : (
+        placeholder
+      )}
 
-      <ContactShadows
-        position={[0, -1.0, 0]}
-        opacity={0.55}
-        blur={2.6}
-        scale={8}
-        far={3}
-        resolution={512}
-        color="#000000"
-      />
+      <StageShadow />
     </>
   );
 }

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono, Playfair_Display } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import {
   BRAND,
   HERO_TIMING,
@@ -8,22 +8,16 @@ import {
 } from "@/lib/constants";
 import "./globals.css";
 
-const display = Playfair_Display({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-display",
-  display: "swap",
-});
-
 const sans = Inter({
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
   variable: "--font-sans",
   display: "swap",
 });
 
 const mono = JetBrains_Mono({
   subsets: ["latin"],
-  weight: ["400", "500"],
+  weight: ["400"],
   variable: "--font-mono",
   display: "swap",
 });
@@ -34,7 +28,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0A0A0A",
+  themeColor: "#050505",
 };
 
 const DEV = process.env.NODE_ENV !== "production";
@@ -68,7 +62,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${display.variable} ${sans.variable} ${mono.variable}`}
+      className={`${sans.variable} ${mono.variable}`}
     >
       <head>
         <link rel="preload" href={MODEL_PATH} as="fetch" crossOrigin="anonymous" />

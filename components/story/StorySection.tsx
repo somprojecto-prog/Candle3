@@ -35,18 +35,18 @@ export default function StorySection({
         "relative z-10",
         tone === "raised" ? "bg-ink2" : "bg-ink",
         divider && "border-t border-line story:border-transparent",
-        !flush && "py-20 md:py-[120px] story:py-0",
+        !flush && "py-12 md:py-20 story:py-0",
         "story:bg-transparent story:min-h-[var(--story-min)]",
         className,
       )}
     >
       <div
         className={cn(
-          fill && "flex min-h-[calc(100svh-72px)] items-center",
-          "story:sticky story:top-[72px] story:flex story:h-[calc(100svh-72px)] story:min-h-0 story:items-center",
+          fill && "flex min-h-[max(100svh,800px)] items-center pt-[var(--header-h)]",
+          "story:sticky story:top-[var(--header-h)] story:flex story:h-[calc(100svh-var(--header-h))] story:min-h-0 story:items-center story:pt-0",
         )}
       >
-        <Container className="story:w-full">{children}</Container>
+        <Container>{children}</Container>
       </div>
     </section>
   );

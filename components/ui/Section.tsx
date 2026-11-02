@@ -23,7 +23,7 @@ export default function Section({
     <section
       id={id}
       className={cn(
-        "relative py-20 md:py-[120px]",
+        "relative py-12 md:py-20",
         tone === "raised" ? "bg-ink2" : "bg-ink",
         divider && "border-t border-line",
         className,

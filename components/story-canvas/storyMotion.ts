@@ -1,5 +1,8 @@
 import * as THREE from "three";
 import { BOX_FADE_SCALE } from "@/components/product/config";
+import { boxLiftY } from "./revealChoreo";
+
+export { boxLiftY };
 
 export interface Delta {
   x: number;
@@ -39,15 +42,7 @@ export function lidDelta(stage: number, out: Delta): Delta {
   return out;
 }
 
-export const boxLiftY = (l: number): number => (l <= 1 ? l * 1.6 : 1.6 + (l - 1) * 4.0);
+/** Fade só depois de a capa passar o topo do enquadramento (lift ≈ 1.35). */
 export const boxOpacity = (l: number): number => 1 - THREE.MathUtils.smoothstep(l, 1.35, 1.9);
-
-
-/** Scale during box fade (same smoothstep window as opacity). */
-export function boxScale(lift: number): number {
-  const a = 1.35;
-  const b = 1.9;
-  const x = Math.min(Math.max((lift - a) / (b - a), 0), 1);
-  const s = x * x * (3 - 2 * x);
-  return 1 - BOX_FADE_SCALE * s;
-}
+export const boxScale = (l: number): number =>
+  1 - BOX_FADE_SCALE * THREE.MathUtils.smoothstep(l, 1.35, 1.9);

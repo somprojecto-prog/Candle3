@@ -12,10 +12,11 @@ export interface Look {
   albedo: { box: number; tray: number; lid: number; jar: number };
   jarEnv: number;
   matEnv: number;
-  halo: number;
+  halo: number; // NUNCA > 0.12
   shadow: number;
 }
 
+// Linha de base inalterada nesta fase (afinada com o LookTuner).
 export const LOOK_DEFAULTS: Readonly<Look> = Object.freeze({
   exposure: 1.15,
   hemi: 0.9,
@@ -36,6 +37,15 @@ export const LOOK: Look & { rev: number } = {
   albedo: { ...LOOK_DEFAULTS.albedo },
   rev: 0,
 };
+
+/** Key quente suave + rim esquerdo frio MUITO subtil (não tinge a cena). O dourado vem só dos decals. */
+export const LIGHT_COLORS = {
+  key: "#FFF4E6",
+  fill: "#FFFFFF",
+  top: "#FFFFFF",
+  rimL: "#E6EEFF",
+  rimR: "#FFF1DC",
+} as const;
 
 export const LOOK_INFO = { tone: -1, exposure: 0 };
 
@@ -74,6 +84,7 @@ export const ENV_FORMERS: readonly Former[] = [
   { pos: [6, 0.5, 3], scale: [2, 5, 1], intensity: 0.8, color: "#FFFFFF" },
 ];
 
+// ---------- Revelação de luz do hero (constante, fora do tuner) ----------
 export interface RevealFactor {
   key: number;
   fill: number;
@@ -82,7 +93,7 @@ export interface RevealFactor {
 }
 
 export const REVEAL_LIGHT = {
-  startMs: HERO_TIMING.product * 1000,
+  startMs: HERO_TIMING.product * 1000, // ancorada em HERO_TIMING.product (1.6 s)
   durMs: 700,
   from: { key: 0.45, fill: 0.6, top: 0.6, rim: 0.75 } as RevealFactor,
 };

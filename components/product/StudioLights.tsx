@@ -1,14 +1,16 @@
 "use client";
 
 import { Environment, Lightformer } from "@react-three/drei";
+import { perfConfig } from "@/components/story-canvas/perfTier";
 import LightRig from "./LightRig";
 import { ENV_FORMERS } from "./lookConfig";
 
+/** Rig relativo à câmera + ambiente 100% procedural (números em lookConfig; resolução por tier). */
 export default function StudioLights() {
   return (
     <>
       <LightRig />
-      <Environment resolution={256}>
+      <Environment resolution={perfConfig().envRes}>
         {ENV_FORMERS.map((f, i) => (
           <Lightformer
             key={i}

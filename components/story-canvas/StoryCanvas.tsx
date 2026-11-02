@@ -6,17 +6,11 @@ import * as THREE from "three";
 import { probeEnabled } from "@/components/product/config";
 import { LOOK } from "@/components/product/lookConfig";
 import { failStory } from "@/lib/story";
+import { PERF, getPerfTier } from "./perfTier";
+import StoryPoster from "./StoryPoster";
 import StoryScene from "./StoryScene";
 
 const CAMERA = { fov: 28, near: 0.1, far: 60, position: [0, 0, 8] as [number, number, number] };
-const GL = {
-  alpha: true,
-  antialias: true,
-  powerPreference: "high-performance" as const,
-  toneMapping: THREE.NeutralToneMapping,
-};
-const GL_PROBE = { ...GL, preserveDrawingBuffer: true };
-const DPR: [number, number] = [1, 1.75];
 const RESTORE_TIMEOUT_MS = 2000;
 
 class CanvasBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
@@ -40,7 +34,10 @@ export default function StoryCanvas() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const detachRef = useRef<(() => void) | null>(null);
   const [ready, setReady] = useState(false);
+  const [tier] = useState(getPerfTier);
+  const perf = PERF[tier];
 
+  // O evento de falha de contexto não faz bubble, mas passa na fase de captura
   useEffect(() => {
     const wrap = wrapRef.current;
     if (!wrap) return;
@@ -87,23 +84,22 @@ export default function StoryCanvas() {
 
   const handleReady = useCallback(() => setReady(true), []);
 
+  const gl = {
+    alpha: true,
+    antialias: perf.antialias,
+    powerPreference: "high-performance" as const,
+    toneMapping: THREE.NeutralToneMapping,
+    ...(probeEnabled() ? { preserveDrawingBuffer: true } : {}),
+  };
+
   return (
     <div ref={wrapRef} className="pointer-events-none absolute inset-0">
       <CanvasBoundary>
-        <Canvas
-          frameloop="demand"
-          dpr={DPR}
-          camera={CAMERA}
-          gl={probeEnabled() ? GL_PROBE : GL}
-          onCreated={handleCreated}
-        >
+        <Canvas frameloop="demand" dpr={perf.dpr} camera={CAMERA} gl={gl} onCreated={handleCreated}>
           <StoryScene onReady={handleReady} />
         </Canvas>
       </CanvasBoundary>
-      {/* Poster optional — omit if StoryPoster missing */}
-      {!ready && (
-        <div className="pointer-events-none absolute inset-0 bg-ink/40" aria-hidden />
-      )}
+      <StoryPoster hidden={ready} />
     </div>
   );
 }

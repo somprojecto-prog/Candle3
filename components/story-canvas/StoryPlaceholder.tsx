@@ -7,9 +7,8 @@ import * as THREE from "three";
 import { FIT } from "@/components/product/config";
 import { createProductMaterials } from "@/components/product/materials";
 import { addLidFloat } from "./lidFloat";
+import { choreo } from "./revealChoreo";
 import { boxLiftY, boxOpacity, boxScale, lidDelta, makeDelta } from "./storyMotion";
-import { smooth } from "./storySmooth";
-import { sampleTrack, TRACKS } from "./storyTable";
 
 const [TW, TH, TD] = FIT.tray.size;
 const TRAY_CY = FIT.tray.bottomY + TH / 2;
@@ -31,27 +30,25 @@ export default function StoryPlaceholder() {
     m.box.transparent = true;
     return m;
   }, []);
-
   useEffect(() => () => mats.dispose(), [mats]);
 
   useFrame((state) => {
+    const c = choreo;
     const box = boxRef.current;
     const lid = lidRef.current;
-    const lift = sampleTrack(TRACKS.boxLift, smooth.phase);
-    const stage = sampleTrack(TRACKS.lidStage, smooth.phase);
 
     if (box) {
-      const o = boxOpacity(lift);
-      box.position.y = BOX_CY + boxLiftY(lift);
-      box.scale.setScalar(boxScale(lift));
+      const o = boxOpacity(c.lift);
+      box.position.y = BOX_CY + boxLiftY(c.lift) * c.liftK;
+      box.rotation.set(c.tilt, c.yaw, 0);
+      box.scale.setScalar(boxScale(c.lift));
       mats.box.opacity = o;
       mats.box.depthWrite = o >= 1;
       box.visible = o >= 0.01;
     }
-
     if (lid) {
-      lidDelta(stage, delta);
-      addLidFloat(delta, stage, state.clock.elapsedTime);
+      lidDelta(c.stage, delta);
+      addLidFloat(delta, c.stage, state.clock.elapsedTime);
       lid.position.set(delta.x, LID_CY + delta.y, delta.z);
       lid.rotation.set(delta.rx, delta.ry, delta.rz);
     }
@@ -69,13 +66,7 @@ export default function StoryPlaceholder() {
         </mesh>
       </group>
 
-      <RoundedBox
-        args={[TW, TH, TD]}
-        radius={0.04}
-        smoothness={4}
-        position={[0, TRAY_CY, 0]}
-        material={mats.tray}
-      />
+      <RoundedBox args={[TW, TH, TD]} radius={0.04} smoothness={4} position={[0, TRAY_CY, 0]} material={mats.tray} />
 
       <group ref={boxRef} position={[0, BOX_CY, 0]}>
         <mesh material={mats.box}>

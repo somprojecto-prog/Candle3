@@ -1,57 +1,33 @@
 "use client";
 
-import {
-  Component,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type KeyboardEvent,
-  type ReactNode,
-} from "react";
+import { Component, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Canvas } from "@react-three/fiber";
 import * as THREE from "three";
 import type { ProductView } from "@/lib/constants";
-import type { DragRotateHandle } from "./DragRotate";
+import { PERF, getPerfTier } from "@/components/story-canvas/perfTier";
+import { probeEnabled } from "./config";
+import { LOOK } from "./lookConfig";
 import ProductPoster from "./ProductPoster";
 import ProductScene from "./ProductScene";
 
 export interface ProductViewerProps {
   view: ProductView;
   className?: string;
+  /** Mantida na API por compatibilidade; IGNORADA (sem interação livre). */
   interactive?: boolean;
   priority?: boolean;
   label?: string;
-  debugCamera?: Partial<{
-    azim: number;
-    elev: number;
-    dist: number;
-    fov: number;
-    targetY: number;
-  }>;
+  debugCamera?: Partial<{ azim: number; elev: number; dist: number; fov: number; targetY: number }>;
 }
 
 const DEFAULT_LABELS: Record<ProductView, string> = {
-  hero: "Deep Work candle, three-quarter view",
-  statement: "Deep Work candle with lid",
+  hero: "Deep Work candle gift box, three-quarter view",
+  reveal: "Deep Work candle with the box lid lifted away",
   intention: "Close-up of the candle jar and base",
   offer: "Deep Work candle gift box",
 };
 
-const CAMERA = {
-  fov: 28,
-  near: 0.1,
-  far: 60,
-  position: [0, 0, 8] as [number, number, number],
-};
-const GL = {
-  alpha: true,
-  antialias: true,
-  powerPreference: "high-performance" as const,
-  toneMapping: THREE.ACESFilmicToneMapping,
-};
-const CANVAS_STYLE = { touchAction: "pan-y" as const };
-const DPR: [number, number] = [1, 1.75];
+const CAMERA = { fov: 28, near: 0.1, far: 60, position: [0, 0, 8] as [number, number, number] };
 
 let webglSupport: boolean | undefined;
 function hasWebGL(): boolean {
@@ -70,39 +46,30 @@ function hasWebGL(): boolean {
   return webglSupport;
 }
 
-class CanvasBoundary extends Component<
-  { onError: () => void; children: ReactNode },
-  { failed: boolean }
-> {
+class CanvasBoundary extends Component<{ onError: () => void; children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
-  static getDerivedStateFromError() {
+  static getDerivedStateFromError(): { failed: boolean } {
     return { failed: true };
   }
-  componentDidCatch(error: Error) {
+  componentDidCatch(error: Error): void {
     console.error("[ProductViewer] WebGL failed; showing poster.", error);
     this.props.onError();
   }
-  render() {
+  render(): ReactNode {
     return this.state.failed ? null : this.props.children;
   }
 }
 
-export default function ProductViewer({
-  view,
-  className,
-  interactive,
-  priority = false,
-  label,
-  debugCamera,
-}: ProductViewerProps) {
-  const isInteractive = interactive ?? view === "hero";
+export default function ProductViewer({ view, className, priority = false, label, debugCamera }: ProductViewerProps) {
   const rootRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef<DragRotateHandle | null>(null);
-  const [supported] = useState(() => hasWebGL());
+  const [supported] = useState(hasWebGL);
+  const [tier] = useState(getPerfTier);
   const [mounted, setMounted] = useState(priority);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
+  const perf = PERF[tier];
 
+  // Ciclo de vida: monta perto do viewport e DESMONTA ao se afastar (libera o contexto WebGL)
   useEffect(() => {
     const el = rootRef.current;
     if (!el || typeof IntersectionObserver === "undefined") {
@@ -128,6 +95,8 @@ export default function ProductViewer({
   const handleFail = useCallback(() => setFailed(true), []);
 
   const handleCreated = useCallback(({ gl }: { gl: THREE.WebGLRenderer }) => {
+    gl.toneMapping = THREE.NeutralToneMapping;
+    gl.toneMappingExposure = LOOK.exposure;
     gl.setClearColor(0x000000, 0);
     gl.domElement.addEventListener("webglcontextlost", (e) => {
       e.preventDefault();
@@ -135,51 +104,27 @@ export default function ProductViewer({
     });
   }, []);
 
-  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (!isInteractive) return;
-    if (e.key === "ArrowLeft") {
-      e.preventDefault();
-      dragRef.current?.nudge(-10);
-    } else if (e.key === "ArrowRight") {
-      e.preventDefault();
-      dragRef.current?.nudge(10);
-    }
-  };
-
   const showCanvas = mounted && supported && !failed;
+  const gl = {
+    alpha: true,
+    antialias: perf.antialias,
+    powerPreference: "high-performance" as const,
+    toneMapping: THREE.NeutralToneMapping,
+    ...(probeEnabled() ? { preserveDrawingBuffer: true } : {}),
+  };
 
   return (
     <div
       ref={rootRef}
       role="img"
       aria-label={label ?? DEFAULT_LABELS[view]}
-      tabIndex={isInteractive ? 0 : undefined}
-      onKeyDown={onKeyDown}
-      style={{ touchAction: "pan-y" }}
-      className={`relative h-full w-full ${
-        isInteractive
-          ? "select-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
-          : ""
-      } ${className ?? ""}`}
+      className={`relative h-full w-full ${className ?? ""}`}
     >
       {showCanvas && (
         <div className="absolute inset-0">
           <CanvasBoundary onError={handleFail}>
-            <Canvas
-              frameloop="demand"
-              dpr={DPR}
-              camera={CAMERA}
-              gl={GL}
-              style={CANVAS_STYLE}
-              onCreated={handleCreated}
-            >
-              <ProductScene
-                view={view}
-                interactive={isInteractive}
-                dragRef={dragRef}
-                onReady={handleReady}
-                debugCamera={debugCamera}
-              />
+            <Canvas frameloop="demand" dpr={perf.dpr} camera={CAMERA} gl={gl} onCreated={handleCreated}>
+              <ProductScene view={view} onReady={handleReady} debugCamera={debugCamera} />
             </Canvas>
           </CanvasBoundary>
         </div>

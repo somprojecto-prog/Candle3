@@ -13,18 +13,18 @@ interface ButtonProps {
 }
 
 const BASE =
-  "inline-flex items-center justify-center rounded text-btn uppercase transition duration-200 ease-out motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:hover:shadow-none motion-reduce:active:scale-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold";
+  "inline-flex items-center justify-center rounded uppercase transition duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none motion-reduce:hover:scale-100 motion-reduce:active:scale-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-gold";
 
 const VARIANT = {
   primary:
-    "bg-gold text-ink hover:-translate-y-px hover:bg-gold-hi hover:shadow-[0_0_24px_rgba(201,168,76,0.28)] active:translate-y-0 active:scale-[0.98]",
+    "bg-gold text-ink hover:scale-[1.02] hover:bg-gold-hi active:scale-[0.98] active:bg-gold-active",
   secondary:
-    "border border-gold bg-transparent text-gold hover:-translate-y-px hover:bg-gold/10 hover:shadow-[0_0_18px_rgba(201,168,76,0.16)] active:translate-y-0 active:scale-[0.98]",
+    "border border-gold bg-transparent text-gold hover:scale-[1.02] hover:bg-gold/10 active:scale-[0.98]",
 } as const;
 
 const SIZE = {
-  md: "h-[52px] px-8",
-  sm: "h-10 px-5",
+  md: "px-8 py-4 text-btn",
+  sm: "px-5 py-2.5 text-[0.8125rem] font-medium leading-none tracking-[0.02em]",
 } as const;
 
 export default function Button({

@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --header-h: 64px;
+}
+@media (min-width: 768px) {
+  :root {
+    --header-h: 72px;
+  }
+}
+
 html.lenis,
 html.lenis body {
   height: auto;
@@ -20,10 +29,10 @@ html.lenis body {
 }
 
 html {
-  background: #0a0a0a;
-  scroll-padding-top: 72px;
+  background: #050505;
+  scroll-padding-top: var(--header-h);
   scrollbar-width: thin;
-  scrollbar-color: #2a2a2a #0a0a0a;
+  scrollbar-color: #1f1f1f #050505;
 }
 
 body {
@@ -32,103 +41,147 @@ body {
 }
 
 ::selection {
-  background: #c9a84c;
-  color: #0a0a0a;
+  background: #c9a227;
+  color: #050505;
 }
 
 ::-webkit-scrollbar {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0a0a0a;
+  background: #050505;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a2a2a;
+  background: #1f1f1f;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #c9a84c;
+  background: #c9a227;
 }
 
 :focus-visible {
-  outline: 2px solid #c9a84c;
-  outline-offset: 4px;
+  outline: 2px solid #c9a227;
+  outline-offset: 3px;
 }
 
+/* [data-reveal]: y inicial por variante = REVEAL_Y em lib/motion.ts */
 .js [data-reveal] {
   opacity: 0;
   transform: translateY(24px);
 }
+.js [data-reveal="default"] {
+  transform: translateY(24px);
+}
+.js [data-reveal="line"] {
+  transform: translateY(12px);
+}
+.js [data-reveal="label"] {
+  transform: translateY(8px);
+}
+.js [data-reveal="blur"] {
+  transform: translateY(12px);
+  filter: blur(8px);
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .js [data-reveal] {
+  html {
+    scroll-behavior: auto;
+  }
+  .js [data-reveal],
+  .js [data-reveal="default"],
+  .js [data-reveal="line"],
+  .js [data-reveal="label"],
+  .js [data-reveal="blur"] {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/*
+ * Hero: sequência 0–2.2 s. Números = HERO_TIMING / HERO_DUR (lib/constants.ts);
+ * easings = EASE_CSS (lib/motion.ts). Todas as animações usam fill "both":
+ * mesmo que o JS morra, o fim da cadeia deixa tudo visível (fail-safe por CSS).
+ * Fora de data-hero="playing" (done, sem atributo, reduced-motion) = estado final.
+ */
+@keyframes heroLabelInit {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  61.54% {
+    opacity: 1;
+    transform: none;
+  }
+  76.92% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: none;
+  }
+}
+@keyframes heroRise8 {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
     opacity: 1;
     transform: none;
   }
 }
-
-@keyframes heroFade {
+@keyframes heroRise12 {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
   to {
     opacity: 1;
+    transform: none;
+  }
+}
+@keyframes heroBlur {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
   }
 }
 @keyframes heroScale {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
   to {
     opacity: 1;
     transform: none;
-  }
-}
-@keyframes heroUp {
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-@keyframes heroShow {
-  to {
-    visibility: visible;
   }
 }
 
-html[data-hero="playing"] [data-hero-comment] {
-  opacity: 0;
-  animation: heroFade 160ms ease-out 200ms forwards;
-}
-html[data-hero="playing"] [data-hero-sub] {
-  opacity: 0;
-  transform: translateY(12px);
-  animation: heroUp 400ms ease-out 1700ms forwards;
-}
-html[data-hero="playing"] [data-hero-product] {
-  opacity: 0;
-  transform: scale(0.96);
-  animation: heroScale 500ms cubic-bezier(0.2, 0.7, 0.2, 1) 2000ms forwards;
-}
-html[data-hero="playing"] [data-hero-cta] {
-  opacity: 0;
-  transform: translateY(16px);
-  animation: heroUp 300ms ease-out 2300ms forwards;
-}
-html[data-hero="playing"] [data-hero-scroll] {
-  opacity: 0;
-  animation: heroFade 300ms ease-out 2600ms forwards;
-}
-html[data-hero="playing"] [data-hero-title-full] {
-  visibility: hidden;
-  animation: heroShow 0s step-end 3.2s forwards;
-}
-[data-hero-title-typed] {
+[data-hero-label-init] {
   display: none;
 }
-html[data-hero="playing"] [data-hero-title-typed] {
+html[data-hero="playing"] [data-hero-label-init] {
   display: block;
+  animation: heroLabelInit 650ms cubic-bezier(0.16, 1, 0.3, 1) 300ms both;
 }
-.hero-cursor {
-  display: inline-block;
-  width: 2px;
-  height: 0.82em;
-  margin-left: 0.05em;
-  vertical-align: -0.02em;
-  background: #c9a84c;
-  visibility: hidden;
+html[data-hero="playing"] [data-hero-label-focus] {
+  animation: heroRise8 400ms cubic-bezier(0.16, 1, 0.3, 1) 800ms both;
+}
+html[data-hero="playing"] [data-hero-headline] {
+  animation: heroBlur 600ms cubic-bezier(0.22, 1, 0.36, 1) 1000ms both;
+}
+html[data-hero="playing"] [data-hero-sub],
+html[data-hero="playing"] [data-hero-cta] {
+  animation: heroRise12 500ms cubic-bezier(0.16, 1, 0.3, 1) 1400ms both;
+}
+html[data-hero="playing"] [data-hero-product] {
+  animation: heroScale 600ms cubic-bezier(0.16, 1, 0.3, 1) 1600ms both;
 }

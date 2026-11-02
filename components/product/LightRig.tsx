@@ -3,9 +3,15 @@
 import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
+import { choreo } from "@/components/story-canvas/revealChoreo";
 import { lookAzim } from "./camState";
-import { LOOK, LOOK_INFO, revealActive, revealFactor, subscribeLook } from "./lookConfig";
+import { LIGHT_COLORS, LOOK, LOOK_INFO, revealActive, revealFactor, subscribeLook } from "./lookConfig";
 
+/**
+ * Rig relativo à câmera (roda com o azimute). Fixa tone mapping/exposição e aplica por frame
+ * LOOK × fator de revelação do hero; key/fill também × choreo.light (abertura da caixa).
+ * Fora do story, choreo.light = 1. A exposição NÃO muda.
+ */
 export default function LightRig() {
   const invalidate = useThree((s) => s.invalidate);
   const rig = useRef<THREE.Group>(null);
@@ -18,6 +24,7 @@ export default function LightRig() {
 
   useEffect(() => subscribeLook(invalidate), [invalidate]);
 
+  // frameloop="demand": pede render enquanto a revelação de luz do hero corre
   useEffect(() => {
     let raf = 0;
     const loop = () => {
@@ -36,10 +43,11 @@ export default function LightRig() {
     LOOK_INFO.exposure = gl.toneMappingExposure;
 
     const r = revealFactor();
+    const k = choreo.light;
     if (rig.current) rig.current.rotation.y = lookAzim(scene);
     if (hemi.current) hemi.current.intensity = LOOK.hemi;
-    if (key.current) key.current.intensity = LOOK.key * r.key;
-    if (fill.current) fill.current.intensity = LOOK.fill * r.fill;
+    if (key.current) key.current.intensity = LOOK.key * r.key * k;
+    if (fill.current) fill.current.intensity = LOOK.fill * r.fill * k;
     if (top.current) top.current.intensity = LOOK.top * r.top;
     if (rimL.current) rimL.current.intensity = LOOK.rimL * r.rim;
     if (rimR.current) rimR.current.intensity = LOOK.rimR * r.rim;
@@ -49,12 +57,12 @@ export default function LightRig() {
     <>
       <hemisphereLight ref={hemi} args={["#FFFFFF", "#1A1A1A"]} intensity={LOOK.hemi} />
       <group ref={rig}>
-        <directionalLight ref={key} color="#FFF4E6" intensity={LOOK.key} position={[-4, 5, 4.5]} />
-        <directionalLight ref={fill} color="#FFFFFF" intensity={LOOK.fill} position={[4.5, 1.5, 3.5]} />
-        <directionalLight ref={top} color="#FFFFFF" intensity={LOOK.top} position={[0, 6, 1]} />
+        <directionalLight ref={key} color={LIGHT_COLORS.key} intensity={LOOK.key} position={[-4, 5, 4.5]} />
+        <directionalLight ref={fill} color={LIGHT_COLORS.fill} intensity={LOOK.fill} position={[4.5, 1.5, 3.5]} />
+        <directionalLight ref={top} color={LIGHT_COLORS.top} intensity={LOOK.top} position={[0, 6, 1]} />
         <spotLight
           ref={rimL}
-          color="#FFFFFF"
+          color={LIGHT_COLORS.rimL}
           intensity={LOOK.rimL}
           position={[-3.8, 3, -4.8]}
           angle={0.55}
@@ -63,7 +71,7 @@ export default function LightRig() {
         />
         <spotLight
           ref={rimR}
-          color="#FFF1DC"
+          color={LIGHT_COLORS.rimR}
           intensity={LOOK.rimR}
           position={[3.8, 2.6, -4.8]}
           angle={0.55}

@@ -1,26 +1,29 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
-import { LOOK, subscribeLook } from "./lookConfig";
+import { choreo } from "@/components/story-canvas/revealChoreo";
+import { perfConfig } from "@/components/story-canvas/perfTier";
+import { LOOK } from "./lookConfig";
 
 interface BackdropGlowProps {
   size: number;
   center: [number, number, number];
-  follow?: THREE.Vector3;
+  follow?: THREE.Vector3; // story: o centro segue o alvo da câmera
 }
 
 const MAX_PEAK = 0.12;
 const BEHIND = 2;
 const FLOOR_Y = -1.0 + 0.002;
 const POOL_K = 0.2;
-const GLOW_LAYER = 1;
+const GLOW_LAYER = 1; // fora da layer 0: o ContactShadows não os trata como oclusores
 
 const _c = new THREE.Vector3();
 const _dir = new THREE.Vector3();
 
+/** Radial 256²: alpha 1→0 (smoothstep), alpha 0 na borda (sem aresta dura). */
 function createGlowTexture(): THREE.CanvasTexture {
   const S = 256;
   const canvas = document.createElement("canvas");
@@ -53,16 +56,14 @@ export default function BackdropGlow({ size, center, follow }: BackdropGlowProps
   const poolRef = useRef<THREE.Mesh>(null);
 
   const tex = useMemo(() => createGlowTexture(), []);
-  const mk = () =>
-    new THREE.MeshBasicMaterial({
-      map: tex,
-      transparent: true,
-      depthWrite: false,
-      toneMapped: false,
-      opacity: 0,
-    });
-  const haloMat = useMemo(mk, [tex]);
-  const poolMat = useMemo(mk, [tex]);
+  const haloMat = useMemo(
+    () => new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, toneMapped: false, opacity: 0 }),
+    [tex],
+  );
+  const poolMat = useMemo(
+    () => new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, toneMapped: false, opacity: 0 }),
+    [tex],
+  );
 
   useEffect(() => () => tex.dispose(), [tex]);
   useEffect(() => () => haloMat.dispose(), [haloMat]);
@@ -105,18 +106,37 @@ export default function BackdropGlow({ size, center, follow }: BackdropGlowProps
   );
 }
 
+/**
+ * Sombra de contacto curta (far ≤ 1.2, blur ≤ 2.0). A opacidade segue LOOK.shadow × choreo.shadow
+ * por frame (0.45× → 1.0× durante a abertura); fora do story choreo.shadow = 1.
+ */
 export function StageShadow() {
-  const [, setRev] = useState(0);
-  useEffect(() => subscribeLook(() => setRev(LOOK.rev)), []);
+  const ref = useRef<THREE.Group>(null);
+  const matRef = useRef<THREE.MeshBasicMaterial | null>(null);
+  const perf = perfConfig();
+
+  useFrame(() => {
+    const g = ref.current;
+    if (!g) return;
+    if (!matRef.current) {
+      g.traverse((o) => {
+        if (!matRef.current && o instanceof THREE.Mesh && o.material instanceof THREE.MeshBasicMaterial) {
+          matRef.current = o.material;
+        }
+      });
+    }
+    if (matRef.current) matRef.current.opacity = LOOK.shadow * choreo.shadow;
+  });
 
   return (
     <ContactShadows
+      ref={ref}
       position={[0, -1.0, 0]}
       opacity={LOOK.shadow}
       scale={7}
-      blur={2.0}
+      blur={perf.shadowBlur}
       far={1.2}
-      resolution={512}
+      resolution={perf.shadowRes}
       color="#000000"
     />
   );
