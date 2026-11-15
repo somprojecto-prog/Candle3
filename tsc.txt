@@ -1,0 +1,19 @@
+﻿components/sections/Offer.tsx(2,10): error TS2305: Module '"@/lib/content"' has no exported member 'OFFER'.
+components/sections/Offer.tsx(35,30): error TS7006: Parameter 'item' implicitly has an 'any' type.
+components/sections/Offer.tsx(35,36): error TS7006: Parameter 'i' implicitly has an 'any' type.
+components/sections/ProductReveal.tsx(16,22): error TS2322: Type '"reveal"' is not assignable to type 'ProductView'.
+components/sections/ProductSpecs.tsx(11,42): error TS2322: Type '"specs"' is not assignable to type '"notes" | "offer" | "hero" | "intention" | "reveal"'.
+components/sections/Statement.tsx(10,35): error TS2339: Property 'statement' does not exist on type '{ readonly top: "top"; readonly product: "product"; readonly about: "about"; readonly notes: "notes"; readonly offer: "offer"; readonly closing: "closing"; }'.
+components/sections/Statement.tsx(10,46): error TS2322: Type '"statement"' is not assignable to type '"notes" | "offer" | "hero" | "intention" | "reveal"'.
+components/story-canvas/Invalidator.tsx(49,96): error TS2339: Property 'reveal' does not exist on type 'StoryState'.
+components/story-canvas/revealChoreo.ts(86,34): error TS2339: Property 'visible' does not exist on type '{ readonly boxLift: { readonly values: readonly [0, 2, 2, 2, 0]; readonly windows: readonly [undefined, readonly [0, 0.7], undefined, undefined, readonly [0.4, 1]]; readonly eases: readonly [undefined, undefined, undefined, undefined, (x: number) => number]; }; readonly lidStage: { ...; }; }'.
+components/story-canvas/StoryDev.tsx(45,16): error TS2339: Property 'reveal' does not exist on type 'StoryState'.
+components/story-canvas/storySmooth.ts(8,69): error TS2339: Property 'reveal' does not exist on type 'StoryState'.
+components/story-canvas/storySmooth.ts(43,54): error TS2339: Property 'reveal' does not exist on type 'StoryState'.
+components/story/ProductSlot.tsx(4,23): error TS2305: Module '"@/lib/constants"' has no exported member 'PhotoAsset'.
+components/story/ProductSlot.tsx(17,43): error TS2339: Property 'intention' does not exist on type '{ readonly revealOpen: string | null; }'.
+components/story/ProductSlot.tsx(18,39): error TS2339: Property 'specs' does not exist on type '{ readonly revealOpen: string | null; }'.
+components/story/useStoryScroll.ts(113,18): error TS2339: Property 'reveal' does not exist on type 'StoryState'.
+components/ui/ProductPhoto.tsx(3,15): error TS2305: Module '"@/lib/constants"' has no exported member 'PhotoAsset'.
+lib/story.ts(75,7): error TS2304: Cannot find name 'STORY_CAMERA'.
+lib/story.ts(78,15): error TS2304: Cannot find name 'STORY_CAMERA'.

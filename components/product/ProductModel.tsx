@@ -1,60 +1,41 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
-import { useGLTF } from "@react-three/drei";
+import { useEffect, useLayoutEffect, useMemo } from "react";
 import { useThree } from "@react-three/fiber";
-import * as THREE from "three";
+import { useGLTF } from "@react-three/drei";
+import type * as THREE from "three";
 import { MODEL_PATH, type ProductView } from "@/lib/constants";
-import { staticBoxPose } from "@/components/story-canvas/revealChoreo";
-import { GLB_DRACO } from "./config";
-import { createProductMaterials, type ProductMaterials } from "./materials";
-import { buildProductFromGltf } from "./productParts";
+import { FIT, GLB_DRACO } from "./config";
+import { createBoxDecals, createLidLogo } from "./decals";
+import { createProductMaterials } from "./materials";
+import { cloneForViewer, getProductParts, type ProductParts } from "./productParts";
 import { VIEWS } from "./views";
 
-/** Forma mínima usada de buildProductFromGltf (a mesma que este ficheiro já consumia). */
-export interface PartLike {
-  geometry: THREE.BufferGeometry; // COMPARTILHADA: nunca dar dispose
-  position: THREE.Vector3;
-}
-export interface PartsLike {
-  jar: PartLike;
-  tray: PartLike;
-  lid: PartLike;
-  boxMeshes: readonly PartLike[];
-  boxPosition: THREE.Vector3;
-}
-
-export interface GlbRig {
+interface Assets {
   root: THREE.Group;
-  box: THREE.Group; // pivô no centro da bbox
-  lid: THREE.Group; // pivô no centro da bbox
-  boxRest: THREE.Vector3;
-  lidRest: THREE.Vector3;
+  box: THREE.Group;
+  lid: THREE.Group;
+  dispose: () => void;
 }
 
-/** Meshes novos por instância (geometrias partilhadas, materiais próprios). Jarro e bandeja estáticos. */
-export function buildGlbRig(parts: PartsLike, mats: ProductMaterials): GlbRig {
-  const root = new THREE.Group();
-
-  const jar = new THREE.Mesh(parts.jar.geometry, mats.jar);
-  jar.position.copy(parts.jar.position);
-  const tray = new THREE.Mesh(parts.tray.geometry, mats.tray);
-  tray.position.copy(parts.tray.position);
-
-  const lid = new THREE.Group();
-  lid.position.copy(parts.lid.position);
-  lid.add(new THREE.Mesh(parts.lid.geometry, mats.lid));
-
-  const box = new THREE.Group();
-  box.position.copy(parts.boxPosition);
-  parts.boxMeshes.forEach((p) => {
-    const m = new THREE.Mesh(p.geometry, mats.box);
-    m.position.copy(p.position);
-    box.add(m);
-  });
-
-  root.add(jar, tray, lid, box);
-  return { root, box, lid, boxRest: box.position.clone(), lidRest: lid.position.clone() };
+function buildAssets(parts: ProductParts, invalidate: () => void): Assets {
+  const mats = createProductMaterials(true); // GLB: sem garantia de winding
+  const v = cloneForViewer(parts, mats);
+  const decals = createBoxDecals(FIT.box.size, invalidate);
+  v.box.add(decals.group);
+  const logo = createLidLogo(v.lidRadius, v.lidHeight / 2, invalidate);
+  v.lid.add(logo.mesh);
+  return {
+    root: v.root,
+    box: v.box,
+    lid: v.lid,
+    // Só materiais/texturas desta instância. Geometrias partilhadas: NUNCA dispose.
+    dispose: () => {
+      mats.dispose();
+      decals.dispose();
+      logo.dispose();
+    },
+  };
 }
 
 export default function ProductModel({ view }: { view: ProductView }) {
@@ -62,24 +43,21 @@ export default function ProductModel({ view }: { view: ProductView }) {
   const invalidate = useThree((s) => s.invalidate);
   const cfg = VIEWS[view];
 
-  const built = useMemo(() => {
-    const parts: PartsLike | null = buildProductFromGltf(scene as THREE.Group);
-    if (!parts) throw new Error(`[ProductModel] Não foi possível dividir ${MODEL_PATH}; usando o placeholder.`);
-    const mats = createProductMaterials(true);
-    return { rig: buildGlbRig(parts, mats), mats };
-  }, [scene]);
+  const assets = useMemo(() => {
+    const parts = getProductParts(scene);
+    if (!parts) {
+      throw new Error(`[ProductModel] Não foi possível dividir ${MODEL_PATH}; usando o placeholder.`);
+    }
+    return buildAssets(parts, invalidate);
+  }, [scene, invalidate]);
 
-  useEffect(() => () => built.mats.dispose(), [built]);
+  useEffect(() => () => assets.dispose(), [assets]);
 
-  useEffect(() => {
-    const { rig } = built;
-    const pose = staticBoxPose(cfg.reveal);
-    rig.box.visible = cfg.box;
-    rig.box.position.set(rig.boxRest.x, rig.boxRest.y + pose.y, rig.boxRest.z);
-    rig.box.rotation.set(pose.tilt, pose.yaw, 0);
-    rig.lid.visible = cfg.lid === "seated";
+  useLayoutEffect(() => {
+    assets.box.visible = cfg.box;
+    assets.lid.visible = cfg.lid === "seated";
     invalidate();
-  }, [built, cfg.box, cfg.lid, cfg.reveal, invalidate]);
+  }, [assets, cfg.box, cfg.lid, invalidate]);
 
-  return <primitive object={built.rig.root} />;
+  return <primitive object={assets.root} />;
 }

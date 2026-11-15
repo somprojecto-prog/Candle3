@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { camState } from "@/components/product/camState";
-import { STORY_FOCUS, STORY_FOCUS_MOBILE } from "@/lib/story";
+import { STORY_FOCUS, STORY_FOCUS_MOBILE, STORY_STEPS } from "@/lib/story";
 import { choreo } from "./revealChoreo";
 import { motion } from "./storySmooth";
 
@@ -15,23 +15,21 @@ export interface StoryCamKey {
   fov: number; // graus
 }
 
-// ÚNICAS tabelas de câmera (hero, reveal, statement, intention, notes, specs). Afine em /dev/story.
+// 5 passos: hero, reveal, intention, notes, offer. Afine em /dev/story?probe=1.
 export const STORY_CAMERA: readonly StoryCamKey[] = [
-  { target: [0, 0.0, 0], height: 2.6, width: 3.15, fillH: 0.62, maxW: 0.34, elev: 13, azim: 30, fov: 28 }, // 0 hero: caixa fechada ¾ → ≈34% da largura (80–92% da coluna direita)
-  { target: [0, 0.85, 0], height: 4.6, width: 3.2, fillH: 0.72, maxW: 0.42, elev: 16, azim: 14, fov: 28 }, // 1 reveal: altura total com a capa a 2.1 u acima
-  { target: [0, 0.85, 0], height: 4.6, width: 3.2, fillH: 0.72, maxW: 0.42, elev: 16, azim: 14, fov: 28 }, // 2 statement: cópia do 1 (oculto, câmera parada)
-  { target: [0, 0.2, 0], height: 2.4, width: 2.2, fillH: 0.8, maxW: 0.52, elev: 22, azim: -24, fov: 28 }, // 3 intention: close-up jarro+bandeja, tampa a flutuar, à esquerda
-  { target: [0, 0.2, 0], height: 2.4, width: 2.2, fillH: 0.8, maxW: 0.52, elev: 22, azim: -24, fov: 28 }, // 4 notes: cópia do 3 (oculto)
-  { target: [0, 0.0, 0], height: 2.6, width: 3.25, fillH: 0.66, maxW: 0.36, elev: 10, azim: 38, fov: 28 }, // 5 specs: caixa fechada ¾, à esquerda (≤ 38%)
+  { target: [0, 0.0, 0], height: 2.65, width: 3.05, fillH: 0.72, maxW: 0.47, elev: 12, azim: 24, fov: 28 }, // 0 hero
+  { target: [0, -0.05, 0], height: 2.0, width: 2.7, fillH: 0.66, maxW: 0.44, elev: 16, azim: 14, fov: 28 }, // 1 reveal
+  { target: [0, 0.2, 0], height: 2.4, width: 2.2, fillH: 0.82, maxW: 0.48, elev: 22, azim: -24, fov: 28 }, // 2 intention
+  { target: [0, 0.55, 0], height: 3.0, width: 1.9, fillH: 0.72, maxW: 0.34, elev: 12, azim: 0, fov: 28 }, // 3 notes
+  { target: [0, 0.0, 0], height: 2.64, width: 3.1, fillH: 0.62, maxW: 0.42, elev: 12, azim: 28, fov: 28 }, // 4 offer
 ];
 
 export const STORY_CAMERA_MOBILE: readonly StoryCamKey[] = [
-  { target: [0, 0.0, 0], height: 2.6, width: 3.15, fillH: 0.5, maxW: 0.8, elev: 13, azim: 30, fov: 28 }, // 0 hero: metade de baixo
-  { target: [0, 0.85, 0], height: 4.6, width: 3.2, fillH: 0.62, maxW: 0.8, elev: 16, azim: 14, fov: 28 }, // 1 reveal
-  { target: [0, 0.85, 0], height: 4.6, width: 3.2, fillH: 0.62, maxW: 0.8, elev: 16, azim: 14, fov: 28 }, // 2 statement (cópia)
-  { target: [0, 0.2, 0], height: 2.4, width: 2.2, fillH: 0.5, maxW: 0.8, elev: 22, azim: -24, fov: 28 }, // 3 intention
-  { target: [0, 0.2, 0], height: 2.4, width: 2.2, fillH: 0.5, maxW: 0.8, elev: 22, azim: -24, fov: 28 }, // 4 notes (cópia)
-  { target: [0, 0.0, 0], height: 2.6, width: 3.25, fillH: 0.5, maxW: 0.8, elev: 10, azim: 38, fov: 28 }, // 5 specs
+  { target: [0, 0.0, 0], height: 2.6, width: 3.15, fillH: 0.5, maxW: 0.8, elev: 13, azim: 30, fov: 28 }, // 0 hero
+  { target: [0, -0.05, 0], height: 2.0, width: 2.7, fillH: 0.55, maxW: 0.8, elev: 16, azim: 14, fov: 28 }, // 1 reveal
+  { target: [0, 0.2, 0], height: 2.4, width: 2.2, fillH: 0.5, maxW: 0.8, elev: 22, azim: -24, fov: 28 }, // 2 intention
+  { target: [0, 0.55, 0], height: 3.0, width: 1.9, fillH: 0.5, maxW: 0.8, elev: 12, azim: 0, fov: 28 }, // 3 notes
+  { target: [0, 0.0, 0], height: 2.64, width: 3.1, fillH: 0.5, maxW: 0.8, elev: 12, azim: 28, fov: 28 }, // 4 offer
 ];
 
 /** Alvo atual (atualizado por frame): o BackdropGlow segue-o. */
@@ -104,4 +102,23 @@ export function sampleStoryCamera(phase: number, camera: THREE.PerspectiveCamera
   const halfH = dist * Math.tan((camera.fov * D2R) / 2);
   const halfW = halfH * aspect;
   camera.position.addScaledVector(_right, -ndcX * halfW).addScaledVector(_up, -ndcY * halfH);
+}
+
+// Alarme (só dev): todas as tabelas têm de ter um valor por passo do story.
+if (process.env.NODE_ENV !== "production") {
+  const n = STORY_STEPS.length;
+  if (
+    STORY_CAMERA.length !== n ||
+    STORY_CAMERA_MOBILE.length !== n ||
+    STORY_FOCUS.length !== n ||
+    STORY_FOCUS_MOBILE.length !== n
+  ) {
+    console.error("[story] tabelas com tamanhos diferentes", {
+      steps: n,
+      camera: STORY_CAMERA.length,
+      cameraMobile: STORY_CAMERA_MOBILE.length,
+      focus: STORY_FOCUS.length,
+      focusMobile: STORY_FOCUS_MOBILE.length,
+    });
+  }
 }

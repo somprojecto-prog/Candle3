@@ -19,14 +19,13 @@ function setGrey(mat: THREE.MeshPhysicalMaterial, v: number): void {
   mat.color.setRGB(k, k, k, THREE.SRGBColorSpace);
 }
 
-function live(mat: THREE.MeshPhysicalMaterial, albedo: () => number, env: () => number): void {
-  setGrey(mat, albedo());
-  let seen = LOOK.rev;
+export function bindEnv(
+  mat: THREE.MeshStandardMaterial,
+  env: () => number,
+  each?: () => void,
+): void {
   mat.onBeforeRender = (_renderer, scene) => {
-    if (seen !== LOOK.rev) {
-      seen = LOOK.rev;
-      setGrey(mat, albedo());
-    }
+    each?.();
     mat.envMapIntensity = env();
     const e = scene.environment;
     if (mat.envMap !== e) {
@@ -35,6 +34,17 @@ function live(mat: THREE.MeshPhysicalMaterial, albedo: () => number, env: () => 
     }
     mat.envMapRotation.y = lookAzim(scene);
   };
+}
+
+function live(mat: THREE.MeshPhysicalMaterial, albedo: () => number, env: () => number): void {
+  setGrey(mat, albedo());
+  let seen = LOOK.rev;
+  bindEnv(mat, env, () => {
+    if (seen !== LOOK.rev) {
+      seen = LOOK.rev;
+      setGrey(mat, albedo());
+    }
+  });
 }
 
 export function createProductMaterials(doubleSide: boolean): ProductMaterials {

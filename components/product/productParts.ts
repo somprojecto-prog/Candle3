@@ -1,18 +1,30 @@
 import * as THREE from "three";
 import * as BufferGeometryUtils from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { boxProjectUV } from "./boxUV";
 import { FIT, NAMED_NODES } from "./config";
+import type { ProductMaterials } from "./materials";
 
 export interface PartData {
-  geometry: THREE.BufferGeometry;
+  geometry: THREE.BufferGeometry; // COMPARTILHADA entre visualizadores: nunca dar dispose
   position: THREE.Vector3;
 }
 
 export interface ProductParts {
   jar: PartData;
   tray: PartData;
-  lid: PartData;
-  boxMeshes: PartData[];
-  boxPosition: THREE.Vector3;
+  lid: PartData; // geometria centrada; position = centro final
+  boxMeshes: PartData[]; // C2 + C3, position = offset local ao grupo da caixa
+  boxPosition: THREE.Vector3; // centro final do grupo da caixa
+  lidRadius: number;
+  lidHeight: number;
+}
+
+export interface ViewerParts {
+  root: THREE.Group;
+  jar: THREE.Mesh;
+  tray: THREE.Mesh;
+  lid: THREE.Group; // pivô no centro da tampa; mesh na origem
+  box: THREE.Group;
   lidRadius: number;
   lidHeight: number;
 }
@@ -26,14 +38,19 @@ interface Comp {
   aspect: number;
   hRatio: number;
 }
-
+interface Ring {
+  x: number;
+  z: number;
+}
 interface Raw {
   lid: Comp;
   candle: Comp;
   tray: Comp;
-  ring: { x: number; z: number } | null;
+  ring: Ring | null;
   boxes: Comp[];
 }
+
+// ---------- extração de geometria ----------
 
 function bakeWorld(root: THREE.Object3D, requireIndex: boolean): THREE.BufferGeometry | null {
   root.updateWorldMatrix(true, true);
@@ -163,6 +180,8 @@ function splitComponents(src: THREE.BufferGeometry, minVerts: number): THREE.Buf
   return out;
 }
 
+// ---------- métricas e classificação (sem nomes) ----------
+
 function measure(geo: THREE.BufferGeometry): Comp {
   geo.computeBoundingBox();
   const box = (geo.boundingBox ?? new THREE.Box3()).clone();
@@ -188,7 +207,7 @@ function measure(geo: THREE.BufferGeometry): Comp {
   };
 }
 
-function findRing(c: Comp): { x: number; z: number } | null {
+function findRing(c: Comp): Ring | null {
   const pos = c.geo.getAttribute("position");
   const yMin = c.box.max.y - 0.12 * c.size.y;
   const rMax = 0.4 * Math.max(c.size.x, c.size.z);
@@ -209,6 +228,20 @@ function findRing(c: Comp): { x: number; z: number } | null {
   return n >= 12 ? { x: sx / n, z: sz / n } : null;
 }
 
+function dumpComps(comps: Comp[]): void {
+  console.table(
+    comps.map((c, i) => ({
+      i,
+      sx: +c.size.x.toFixed(3),
+      sy: +c.size.y.toFixed(3),
+      sz: +c.size.z.toFixed(3),
+      roundness: +c.roundness.toFixed(3),
+      aspect: +c.aspect.toFixed(3),
+      hRatio: +c.hRatio.toFixed(3),
+    })),
+  );
+}
+
 function classify(comps: Comp[]): Raw | null {
   const round = (c: Comp) => c.roundness < 1.1 && c.aspect > 0.85;
 
@@ -219,8 +252,9 @@ function classify(comps: Comp[]): Raw | null {
   const trayCands = comps.filter(
     (c) => c !== lid && c !== candle && c.aspect > 0.8 && c.hRatio > 0.3 && c.hRatio < 0.6,
   );
+
   let tray: Comp | undefined;
-  let ring: { x: number; z: number } | null = null;
+  let ring: Ring | null = null;
   for (const c of trayCands) {
     const r = findRing(c);
     if (r) {
@@ -230,7 +264,6 @@ function classify(comps: Comp[]): Raw | null {
     }
   }
   if (!tray) tray = trayCands[0];
-
   if (!lid || !candle || !tray) return null;
 
   const remaining = comps.filter((c) => c !== lid && c !== candle && c !== tray);
@@ -241,6 +274,8 @@ function classify(comps: Comp[]): Raw | null {
 
   return { lid, candle, tray, ring, boxes };
 }
+
+// ---------- caminho com nós nomeados ----------
 
 function fromNamed(scene: THREE.Group): Raw | null {
   const keys = Object.keys(NAMED_NODES) as (keyof typeof NAMED_NODES)[];
@@ -260,19 +295,15 @@ function fromNamed(scene: THREE.Group): Raw | null {
     return null;
   }
   const [gl, gb, gt, gc] = geos as THREE.BufferGeometry[];
-  return {
-    lid: measure(gl),
-    boxes: [measure(gb)],
-    tray: measure(gt),
-    candle: measure(gc),
-    ring: null,
-  };
+  return { lid: measure(gl), boxes: [measure(gb)], tray: measure(gt), candle: measure(gc), ring: null };
 }
+
+// ---------- encaixe (FIT) ----------
 
 function fit(geo: THREE.BufferGeometry, srcCenter: THREE.Vector3, scale: THREE.Vector3): THREE.BufferGeometry {
   geo.translate(-srcCenter.x, -srcCenter.y, -srcCenter.z);
   geo.scale(scale.x, scale.y, scale.z);
-  const out = BufferGeometryUtils.toCreasedNormals(geo, Math.PI / 6);
+  const out = BufferGeometryUtils.toCreasedNormals(geo, Math.PI / 6); // arestas vivas (30°)
   if (out !== geo) geo.dispose();
   return out;
 }
@@ -282,18 +313,23 @@ function assemble(raw: Raw): ProductParts {
   const v = new THREE.Vector3();
 
   const sj = FIT.jar.height / candle.size.y;
-  const jarGeo = fit(candle.geo, candle.center, v.set(sj, sj, sj));
-  const jarPos = new THREE.Vector3(0, FIT.jar.centerY, 0);
+  const jar: PartData = {
+    geometry: fit(candle.geo, candle.center, v.set(sj, sj, sj)),
+    position: new THREE.Vector3(0, FIT.jar.centerY, 0),
+  };
 
   const sl = FIT.lid.diameter / Math.max(lid.size.x, lid.size.z);
   const lidH = lid.size.y * sl;
-  const lidGeo = fit(lid.geo, lid.center, v.set(sl, sl, sl));
-  const lidPos = new THREE.Vector3(0, FIT.lid.bottomY + lidH / 2, 0);
+  const lidPart: PartData = {
+    geometry: fit(lid.geo, lid.center, v.set(sl, sl, sl)),
+    position: new THREE.Vector3(0, FIT.lid.bottomY + lidH / 2, 0),
+  };
 
   const [tw, th, td] = FIT.tray.size;
   const tsx = tw / tray.size.x;
   const tsz = td / tray.size.z;
   const trayGeo = fit(tray.geo, tray.center, v.set(tsx, th / tray.size.y, tsz));
+  boxProjectUV(trayGeo); // UVs para o grão de papel (o GLB não tem UVs)
   let ox = 0;
   let oz = 0;
   if (ring) {
@@ -304,7 +340,10 @@ function assemble(raw: Raw): ProductParts {
       oz = -fz * tsz;
     }
   }
-  const trayPos = new THREE.Vector3(ox, FIT.tray.bottomY + th / 2, oz);
+  const trayPart: PartData = {
+    geometry: trayGeo,
+    position: new THREE.Vector3(ox, FIT.tray.bottomY + th / 2, oz),
+  };
 
   const union = new THREE.Box3();
   boxes.forEach((b) => union.union(b.box));
@@ -312,44 +351,35 @@ function assemble(raw: Raw): ProductParts {
   const uCenter = union.getCenter(new THREE.Vector3());
   const [bw, bh, bd] = FIT.box.size;
   const bs = new THREE.Vector3(bw / uSize.x, bh / uSize.y, bd / uSize.z);
-
   const boxMeshes: PartData[] = boxes.map((b) => {
     const offset = b.center.clone().sub(uCenter).multiply(bs);
-    return {
-      geometry: fit(b.geo, b.center, bs),
-      position: offset,
-    };
+    const geometry = fit(b.geo, b.center, bs);
+    boxProjectUV(geometry);
+    return { geometry, position: offset };
   });
-  const boxPosition = new THREE.Vector3(0, FIT.box.bottomY + bh / 2, 0);
 
   return {
-    jar: { geometry: jarGeo, position: jarPos },
-    tray: { geometry: trayGeo, position: trayPos },
-    lid: { geometry: lidGeo, position: lidPos },
+    jar,
+    tray: trayPart,
+    lid: lidPart,
     boxMeshes,
-    boxPosition,
+    boxPosition: new THREE.Vector3(0, FIT.box.bottomY + bh / 2, 0),
     lidRadius: FIT.lid.diameter / 2,
     lidHeight: lidH,
   };
 }
 
-let cachedParts: ProductParts | null | undefined;
+// ---------- API ----------
 
-export function buildProductFromGltf(scene: THREE.Group): ProductParts | null {
-  if (cachedParts !== undefined) return cachedParts;
-
+function computeParts(scene: THREE.Group): ProductParts | null {
   scene.updateMatrixWorld(true);
 
   const named = fromNamed(scene);
-  if (named) {
-    cachedParts = assemble(named);
-    return cachedParts;
-  }
+  if (named) return assemble(named);
 
   const merged = bakeWorld(scene, true);
   if (!merged) {
-    console.warn("[productParts] No usable indexed geometry in GLB.");
-    cachedParts = null;
+    console.warn("[productParts] Nenhuma geometria indexada utilizável no GLB.");
     return null;
   }
   const comps = splitComponents(merged, 200).map(measure);
@@ -357,27 +387,61 @@ export function buildProductFromGltf(scene: THREE.Group): ProductParts | null {
 
   const raw = classify(comps);
   if (!raw) {
-    console.warn("[productParts] Geometry classification failed; using placeholders.");
-    console.table(
-      comps.map((c, i) => ({
-        i,
-        sx: +c.size.x.toFixed(3),
-        sy: +c.size.y.toFixed(3),
-        sz: +c.size.z.toFixed(3),
-        roundness: +c.roundness.toFixed(3),
-        aspect: +c.aspect.toFixed(3),
-        hRatio: +c.hRatio.toFixed(3),
-      })),
-    );
+    console.warn("[productParts] Classificação por geometria falhou; usando placeholder.");
+    dumpComps(comps);
     comps.forEach((c) => c.geo.dispose());
-    cachedParts = null;
     return null;
   }
 
-  const used = new Set([raw.lid, raw.candle, raw.tray, ...raw.boxes]);
+  const used = new Set<Comp>([raw.lid, raw.candle, raw.tray, ...raw.boxes]);
   comps.forEach((c) => {
     if (!used.has(c)) c.geo.dispose();
   });
-  cachedParts = assemble(raw);
-  return cachedParts;
+  return assemble(raw);
+}
+
+const cache = new WeakMap<THREE.Object3D, ProductParts | null>();
+
+/** Geometrias divididas/encaixadas/com normais e UVs: calculadas UMA vez por cena e partilhadas. */
+export function getProductParts(scene: THREE.Group): ProductParts | null {
+  if (cache.has(scene)) return cache.get(scene) ?? null;
+  const parts = computeParts(scene);
+  cache.set(scene, parts);
+  return parts;
+}
+
+/** Alias para quem já consumia este nome (mesma forma de dados). */
+export const buildProductFromGltf = getProductParts;
+
+/** Novos Mesh/Group por visualizador: geometrias partilhadas, materiais próprios. */
+export function cloneForViewer(parts: ProductParts, mats: ProductMaterials): ViewerParts {
+  const root = new THREE.Group();
+  root.name = "Product";
+
+  const jar = new THREE.Mesh(parts.jar.geometry, mats.jar);
+  jar.name = "Candle";
+  jar.position.copy(parts.jar.position);
+
+  const tray = new THREE.Mesh(parts.tray.geometry, mats.tray);
+  tray.name = "Tray";
+  tray.position.copy(parts.tray.position);
+
+  const lidMesh = new THREE.Mesh(parts.lid.geometry, mats.lid);
+  const lid = new THREE.Group();
+  lid.name = "Lid";
+  lid.position.copy(parts.lid.position);
+  lid.add(lidMesh);
+
+  const box = new THREE.Group();
+  box.name = "Box_Body";
+  box.position.copy(parts.boxPosition);
+  parts.boxMeshes.forEach((p, i) => {
+    const m = new THREE.Mesh(p.geometry, mats.box);
+    m.name = `Box_Body_${i}`;
+    m.position.copy(p.position);
+    box.add(m);
+  });
+
+  root.add(jar, tray, lid, box);
+  return { root, jar, tray, lid, box, lidRadius: parts.lidRadius, lidHeight: parts.lidHeight };
 }

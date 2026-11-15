@@ -1,53 +1,42 @@
 import { SECTION_IDS } from "@/lib/constants";
 
-export const STORY_STEPS = ["hero", "reveal", "statement", "intention", "notes", "specs"] as const;
+export const STORY_STEPS = ["hero", "reveal", "intention", "notes", "offer"] as const;
 export type StoryStep = (typeof STORY_STEPS)[number];
 
 export const STORY_SECTION_IDS = [
   SECTION_IDS.top,
   SECTION_IDS.product,
-  SECTION_IDS.statement,
   SECTION_IDS.about,
   SECTION_IDS.notes,
   SECTION_IDS.offer,
 ] as const;
 
-/** Altura mínima (svh) de cada secção em modo "on". ProductReveal é longa: o scroll dentro dela dirige a abertura. */
 export const STORY_SECTION_VH: Record<StoryStep, number> = {
-  hero: 120,
-  reveal: 320,
-  statement: 110,
-  intention: 140,
-  notes: 120,
-  specs: 130,
+  hero: 150,
+  reveal: 150,
+  intention: 150,
+  notes: 145,
+  offer: 140,
 };
 
-/** Referência (B implementa a transição): 1 = produto visível, 0 = oculto. */
-export const STORY_PRODUCT_VISIBLE = [1, 1, 0, 1, 0, 1] as const;
-
-/** Onde o ponto-alvo da câmera aparece na tela (x da esquerda, y do topo; 0..1). Desktop. */
+/** Onde o ponto-alvo da câmera aparece na tela (x da esquerda, y do topo; 0..1). */
 export const STORY_FOCUS = [
-  [0.744, 0.52], // 0 hero: centro da coluna direita (grid 55/45)
-  [0.5, 0.52], // 1 reveal: centrado
-  [0.5, 0.52], // 2 statement: oculto (mantém posição)
-  [0.3, 0.54], // 3 intention: produto à esquerda, parcialmente cortado
-  [0.3, 0.54], // 4 notes: oculto (mantém posição)
-  [0.3, 0.52], // 5 specs: produto à esquerda
+  [0.72, 0.52], // 0 hero: produto à direita
+  [0.7, 0.52], // 1 reveal: texto cols 1–5, produto à direita
+  [0.3, 0.54], // 2 intention: produto à esquerda, texto cols 7–12
+  [0.5, 0.5], // 3 notes: produto ao centro, título à esquerda e lista à direita
+  [0.71, 0.52], // 4 offer: detalhes cols 1–5, produto à direita
 ] as const satisfies readonly (readonly [number, number])[];
 
-/** Mobile (<768px): texto no topo, produto na metade de baixo. */
-export const STORY_FOCUS_MOBILE = [
-  [0.5, 0.74],
-  [0.5, 0.55],
-  [0.5, 0.55],
-  [0.5, 0.74],
-  [0.5, 0.74],
-  [0.5, 0.74],
-] as const satisfies readonly (readonly [number, number])[];
+/** Mobile: produto centrado na metade de baixo. */
+export const STORY_FOCUS_MOBILE: readonly (readonly [number, number])[] = STORY_FOCUS.map(
+  () => [0.5, 0.72] as const,
+);
 
 export interface StoryState {
-  phase: number; // 0..5 contínuo (inteiro = passo em repouso; fração = transição suavizada pelo A)
-  reveal: number; // 0..1 progresso do scroll DENTRO da secção ProductReveal (0 antes dela, 1 depois)
+  phase: number; // 0..4 contínuo (inteiro = passo em repouso)
+  /** 0..1 progresso do scroll dentro da secção do passo "reveal" (0 antes, 1 depois). */
+  reveal: number;
   active: boolean;
 }
 

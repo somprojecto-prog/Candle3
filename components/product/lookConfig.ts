@@ -16,16 +16,15 @@ export interface Look {
   shadow: number;
 }
 
-// Linha de base inalterada nesta fase (afinada com o LookTuner).
 export const LOOK_DEFAULTS: Readonly<Look> = Object.freeze({
   exposure: 1.15,
   hemi: 0.9,
-  key: 3.4,
+  key: 3.4, // key:fill ≈ 4.25:1
   fill: 0.8,
   top: 0.5,
   rimL: 100,
   rimR: 80,
-  albedo: { box: 0x3c, tray: 0x34, lid: 0x40, jar: 0x15 },
+  albedo: { box: 0x44, tray: 0x3c, lid: 0x40, jar: 0x15 }, // box 0x3C → 0x44 · tray 0x34 → 0x3C (carvão quente)
   jarEnv: 2.4,
   matEnv: 1.0,
   halo: 0.1,
@@ -38,14 +37,16 @@ export const LOOK: Look & { rev: number } = {
   rev: 0,
 };
 
-/** Key quente suave + rim esquerdo frio MUITO subtil (não tinge a cena). O dourado vem só dos decals. */
-export const LIGHT_COLORS = {
-  key: "#FFF4E6",
-  fill: "#FFFFFF",
-  top: "#FFFFFF",
-  rimL: "#E6EEFF",
-  rimR: "#FFF1DC",
-} as const;
+/**
+ * Números do cartão e do foil. Fica fora de `LOOK` de propósito: o LookTuner itera as chaves
+ * numéricas de LOOK_DEFAULTS e um sub-objeto novo quebraria o seu tipo (não se altera o tuner).
+ */
+export const BOX_LOOK = { grain: 0.6, clearcoat: 0.14, sheen: 0.7, foilEnv: 1.4, foilEmissive: 0.05 };
+/** Multiplicador RGB do albedo da caixa/bandeja: ≈ #44423F com albedo 0x44. */
+export const BOX_TINT = [1.0, 0.97, 0.93] as const;
+
+/** Multiplicadores por passo e por transição (escritos pelo story; nos viewers estáticos ficam em 1). */
+export const lightMod = { key: 1, fill: 1, top: 1, rim: 1 };
 
 export const LOOK_INFO = { tone: -1, exposure: 0 };
 
@@ -93,13 +94,14 @@ export interface RevealFactor {
 }
 
 export const REVEAL_LIGHT = {
-  startMs: HERO_TIMING.product * 1000, // ancorada em HERO_TIMING.product (1.6 s)
-  durMs: 700,
-  from: { key: 0.45, fill: 0.6, top: 0.6, rim: 0.75 } as RevealFactor,
+  startMs: HERO_TIMING.product * 1000, // 1300 ms
+  durMs: 600, // antes 700
+  from: { key: 0.65, fill: 0.75, top: 0.75, rim: 0.85 } as RevealFactor, // antes 0.45/0.6/0.6/0.75: lê-se desde o 1.º frame
 };
 
 const _rev: RevealFactor = { key: 1, fill: 1, top: 1, rim: 1 };
 
+/** Objeto de módulo reutilizado. Sem intro (reduced-motion, hash, interrompida) → tudo 1. */
 export function revealFactor(): RevealFactor {
   const s = isHeroPlaying() ? heroElapsed() : Infinity;
   if (!Number.isFinite(s)) {
@@ -107,7 +109,7 @@ export function revealFactor(): RevealFactor {
     return _rev;
   }
   const p = Math.min(Math.max((s * 1000 - REVEAL_LIGHT.startMs) / REVEAL_LIGHT.durMs, 0), 1);
-  const e = 1 - (1 - p) * (1 - p) * (1 - p);
+  const e = 1 - (1 - p) * (1 - p) * (1 - p); // easeOutCubic
   const f = REVEAL_LIGHT.from;
   _rev.key = f.key + (1 - f.key) * e;
   _rev.fill = f.fill + (1 - f.fill) * e;

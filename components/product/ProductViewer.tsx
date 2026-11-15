@@ -22,7 +22,7 @@ export interface ProductViewerProps {
 
 const DEFAULT_LABELS: Record<ProductView, string> = {
   hero: "Deep Work candle gift box, three-quarter view",
-  reveal: "Deep Work candle with the box lid lifted away",
+  statement: "Deep Work candle with the box lid lifted away",
   intention: "Close-up of the candle jar and base",
   offer: "Deep Work candle gift box",
 };

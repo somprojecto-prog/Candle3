@@ -1,51 +1,56 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { RoundedBox } from "@react-three/drei";
+import { useThree } from "@react-three/fiber";
 import type { ProductView } from "@/lib/constants";
-import { staticBoxPose } from "@/components/story-canvas/revealChoreo";
+import { createProjectedBox } from "./boxUV";
 import { FIT } from "./config";
+import { createBoxDecals, createLidLogo } from "./decals";
 import { createProductMaterials } from "./materials";
 import { VIEWS } from "./views";
 
-export default function ProductPlaceholder({ view }: { view: ProductView }) {
-  const mats = useMemo(() => createProductMaterials(false), []);
-  useEffect(() => () => mats.dispose(), [mats]);
+const [TW, TH, TD] = FIT.tray.size;
+const [BW, BH, BD] = FIT.box.size;
+const JAR_R = 0.64;
+const LID_R = FIT.lid.diameter / 2;
+const LID_H = 0.18;
 
+/** Fallback estático: mesmas medidas (FIT), mesmos materiais e decals que o GLB. */
+export default function ProductPlaceholder({ view }: { view: ProductView }) {
+  const invalidate = useThree((s) => s.invalidate);
   const cfg = VIEWS[view];
-  const pose = useMemo(() => staticBoxPose(cfg.reveal), [cfg.reveal]);
-  const [tw, th, td] = FIT.tray.size;
-  const [bw, bh, bd] = FIT.box.size;
-  const jarR = 0.64;
-  const lidR = FIT.lid.diameter / 2;
-  const lidH = 0.18;
+
+  const mats = useMemo(() => createProductMaterials(false), []);
+  const trayGeo = useMemo(() => createProjectedBox(TW, TH, TD), []);
+  const boxGeo = useMemo(() => createProjectedBox(BW, BH, BD), []);
+  const decals = useMemo(() => createBoxDecals(FIT.box.size, invalidate), [invalidate]);
+  const logo = useMemo(() => createLidLogo(LID_R, LID_H / 2, invalidate), [invalidate]);
+
+  useEffect(() => () => mats.dispose(), [mats]);
+  useEffect(() => () => trayGeo.dispose(), [trayGeo]);
+  useEffect(() => () => boxGeo.dispose(), [boxGeo]);
+  useEffect(() => () => decals.dispose(), [decals]);
+  useEffect(() => () => logo.dispose(), [logo]);
 
   return (
     <group>
-      <RoundedBox
-        args={[tw, th, td]}
-        radius={0.04}
-        smoothness={4}
-        position={[0, FIT.tray.bottomY + th / 2, 0]}
-        material={mats.tray}
-      />
+      <mesh geometry={trayGeo} material={mats.tray} position={[0, FIT.tray.bottomY + TH / 2, 0]} />
+
       <mesh position={[0, FIT.jar.centerY, 0]} material={mats.jar}>
-        <cylinderGeometry args={[jarR, jarR, FIT.jar.height, 64]} />
+        <cylinderGeometry args={[JAR_R, JAR_R, FIT.jar.height, 64]} />
       </mesh>
-      {cfg.lid === "seated" && (
-        <mesh position={[0, FIT.lid.bottomY + lidH / 2, 0]} material={mats.lid}>
-          <cylinderGeometry args={[lidR, lidR, lidH, 64]} />
+
+      <group position={[0, FIT.lid.bottomY + LID_H / 2, 0]} visible={cfg.lid === "seated"}>
+        <mesh material={mats.lid}>
+          <cylinderGeometry args={[LID_R, LID_R, LID_H, 64]} />
         </mesh>
-      )}
-      {cfg.box && (
-        <mesh
-          position={[0, FIT.box.bottomY + bh / 2 + pose.y, 0]}
-          rotation={[pose.tilt, pose.yaw, 0]}
-          material={mats.box}
-        >
-          <boxGeometry args={[bw, bh, bd]} />
-        </mesh>
-      )}
+        <primitive object={logo.mesh} />
+      </group>
+
+      <group position={[0, FIT.box.bottomY + BH / 2, 0]} visible={cfg.box}>
+        <mesh geometry={boxGeo} material={mats.box} />
+        <primitive object={decals.group} />
+      </group>
     </group>
   );
 }

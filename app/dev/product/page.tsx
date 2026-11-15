@@ -6,7 +6,7 @@ import type { ProductView } from "@/lib/constants";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
-const VIEW_LIST: readonly ProductView[] = ["hero", "reveal", "intention", "offer"];
+const VIEW_LIST: readonly ProductView[] = ["hero", "statement", "intention", "offer"];
 
 const first = (v: string | string[] | undefined): string | undefined => (Array.isArray(v) ? v[0] : v);
 

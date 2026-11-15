@@ -5,11 +5,10 @@ import CursorRing from "@/components/ui/CursorRing";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Hero from "@/components/sections/Hero";
-import ProductReveal from "@/components/sections/ProductReveal";
-import Statement from "@/components/sections/Statement";
+import ProductStatement from "@/components/sections/ProductStatement";
 import Intention from "@/components/sections/Intention";
 import Notes from "@/components/sections/Notes";
-import ProductSpecs from "@/components/sections/ProductSpecs";
+import Offer from "@/components/sections/Offer";
 import ClosingCTA from "@/components/sections/ClosingCTA";
 
 export default function Page() {
@@ -21,11 +20,10 @@ export default function Page() {
       <main>
         <StoryProvider>
           <Hero />
-          <ProductReveal />
-          <Statement />
+          <ProductStatement />
           <Intention />
           <Notes />
-          <ProductSpecs />
+          <Offer />
         </StoryProvider>
         <ClosingCTA />
       </main>

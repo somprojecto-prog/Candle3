@@ -37,11 +37,10 @@ export const NOTES = {
   ],
 } as const;
 
-export const SPECS = {
+export const OFFER = {
   title: "Deep Work Candle",
   price: PRICE,
-  summary: "16 oz · Soy wax blend · Wood wick · 80+ hours",
-  items: ["16 oz", "Soy wax blend", "Wood wick", "80+ hours burn time"],
+  info: ["16 oz", "Soy wax blend", "Wood wick", "80+ hours burn time"],
   cta: CTA_LABEL,
   support: [
     "Hand poured in small batches",

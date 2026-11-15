@@ -18,7 +18,7 @@ const GOLD = "#C9A227";
 
 const VIEWBOX: Record<ProductView, string> = {
   hero: "-45 -40 720 620",
-  reveal: "120 14 360 470",
+  statement: "120 14 360 470",
   intention: "140 162 320 332",
   offer: "-45 -40 720 620",
 };
@@ -121,7 +121,7 @@ export default function ProductPoster({ view, className = "h-full w-full", tight
           <GiftBox face={face} />
         ) : (
           <g>
-            {view === "reveal" && <LiftedCap />}
+            {view === "statement" && <LiftedCap />}
             <Tray />
             <Jar jar={jar} />
             <Lid />

@@ -1,0 +1,20 @@
+﻿components\product\ContrastProbe.tsx:89: const [info, setInfo] = useState({ tone: -1, exposure: 0, phase: 0, reveal: 0 });
+components\product\ContrastProbe.tsx:99: reveal: getReveal?.() ?? 0,
+components\product\ContrastProbe.tsx:127: phase: {info.phase.toFixed(2)} · reveal: {info.reveal.toFixed(2)} (scale valid at phase 0)
+components\sections\ClosingCTA.tsx:2: import { CLOSING } from "@/lib/content";
+components\sections\Hero.tsx:2: import { HERO } from "@/lib/content";
+components\sections\Intention.tsx:2: import { INTENTION } from "@/lib/content";
+components\sections\Notes.tsx:2: import { NOTES } from "@/lib/content";
+components\sections\Offer.tsx:2: import { OFFER } from "@/lib/content";
+components\sections\ProductReveal.tsx:10: <StorySection id={SECTION_IDS.product} step="reveal" tone="base">
+components\sections\ProductReveal.tsx:16: <ProductSlot view="reveal" className="h-full w-full" />
+components\sections\ProductSpecs.tsx:3: import { SPECS } from "@/lib/content";
+components\sections\ProductStatement.tsx:2: import { STATEMENT } from "@/lib/content";
+components\sections\ProductStatement.tsx:10: <StorySection id={SECTION_IDS.product} step="reveal" tone="base">
+components\sections\Statement.tsx:3: import { STATEMENT } from "@/lib/content";
+components\story-canvas\revealChoreo.ts:66: export function updateChoreo(phase: number, reveal: number, mobile: boolean): void {
+components\story-canvas\revealChoreo.ts:90: export function staticBoxPose(reveal: number): { y: number; tilt: number; yaw: number } {
+components\story-canvas\StoryDev.tsx:32: initialReveal: number;
+components\story-canvas\storySmooth.ts:8: export const smooth = { phase: storyState.phase, reveal: storyState.reveal };
+lib\story.ts:3: export const STORY_STEPS = ["hero", "reveal", "intention", "notes", "offer"] as const;
+lib\story.ts:16: reveal: 150,
